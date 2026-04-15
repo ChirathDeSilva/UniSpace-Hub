@@ -1,0 +1,20 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "UniSpaceHubApplication",
+            "request": "launch",
+            "mainClass": "com.uniSpaceHub.demo.UniSpaceHubApplication",
+            "projectName": ""
+        },
+        {
+            "type": "java",
+            "name": "UniSpaceHubApplication (backend)",
+            "request": "launch",
+            "mainClass": "com.uniSpaceHub.demo.UniSpaceHubApplication",
+            "projectName": "demo",
+            "cwd": "${workspaceFolder}/backend"
+        }
+    ]
+}
