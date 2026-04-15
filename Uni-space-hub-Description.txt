@@ -1,0 +1,199 @@
+ Smart Campus Operations Hub – Complete Scenario (With Technician Role & Dashboard)
+1. Overview
+The Smart Campus Operations Hub is a web-based system designed to modernize university operations. It integrates facilities management, booking workflows, incident ticketing, notifications, and secure authentication into a single platform.
+
+Roles supported:
+
+Students → browse facilities, request bookings, raise tickets.
+
+Academic Staff → browse facilities (can book lecture halls and labs in addition to other facilities), request bookings, raise tickets.
+
+Admins → manage facilities, approve/reject bookings, assign tickets, oversee notifications.
+
+Technicians → log in to their own dashboard, accept/reject tickets in their category (Electrical Maintenance, Other Maintenance, IT Support, Computer Hardware Support), update statuses, and change facility conditions when required.
+
+2. Authentication & Authorization (Module E)
+Login: Secure login via Google OAuth 2.0.
+
+Roles:
+
+Student → booking requests, ticket submission, notifications.
+
+Academic Staff → booking requests (special facilities like lecture halls and labs), ticket submission, notifications.
+
+Admin → full control over facilities, bookings, tickets, and notifications.
+
+Technician → specialized dashboard for handling tickets in their assigned category.
+
+Route Protection: React frontend ensures only authorized roles can access their dashboards.
+
+RBAC: Backend enforces role-based access, rejecting unauthorized API calls.
+
+3. Facilities & Assets Catalogue (Module A)
+Catalogue Display: Facilities shown as cards with metadata:
+
+Categories: Lecture halls, Labs, Sports facilities (tennis court, swimming pool), Equipment (projectors, badminton rackets, etc.).
+
+Location, status (Available, Maintenance, Temporarily Closed, Booked).
+
+Additional details vary by category (capacity of hall, number of students for playground, etc.).
+
+Booking Integration:
+
+Lecture halls, labs → bookable only by lecturers.
+
+Conference rooms, libraries, sports facilities, auditoriums → bookable by students.
+
+Admin Management: Admins can add, update, delete facilities, and change statuses.
+
+Search & Filtering: Users can filter by type, capacity, and location.
+
+4. Booking Management (Module B)
+User Actions: Request bookings, view/cancel own bookings.
+
+Workflow: PENDING → APPROVED / REJECTED → CANCELLED.
+
+Conflict Detection: Prevents overlapping bookings for the same resource.
+
+Admin Actions: Review requests, approve/reject with reason, manage conflicts.
+
+5. Incident Ticketing (Module C)
+User Actions:
+
+Submit tickets with category (Other Maintenance, IT Support, Computer Hardware Support, Electrical).
+
+Provide description, priority, and attachments.
+
+Track ticket status: NEW → IN_PROGRESS → RESOLVED → CLOSED (or REJECTED).
+
+Add comments to tickets.
+
+Ticket Routing Logic:
+
+Technician-related categories → automatically routed to the Technician Dashboard.
+
+Non-technician categories → routed to the Admin Dashboard.
+
+Technician Actions:
+
+Log in to their dashboard.
+
+Accept or reject tickets assigned to their category.
+
+Update ticket status (IN_PROGRESS, RESOLVED, CLOSED).
+
+Add resolution notes.
+
+Change facility status if required (e.g., mark a lab as OUT_OF_SERVICE during maintenance).
+
+Notifications sent to ticket owners when technicians accept/reject or update tickets.
+
+Admin Actions:
+
+View all tickets.
+
+Handle tickets not related to technicians.
+
+Monitor technician updates and ensure communication with ticket owners.
+
+6. Notifications (Module D)
+Automated Triggers:
+
+Booking approval/rejection.
+
+Ticket acceptance/rejection by technician.
+
+Ticket status changes (IN_PROGRESS, RESOLVED, CLOSED).
+
+Facility status changes.
+
+New comments on tickets.
+
+Notification Panel: Bell icon + dropdown in UI.
+
+Read/Unread Management: Users can mark notifications as read or delete them.
+
+Admin Notifications: Facility status changes and ticket updates trigger notifications for users.
+
+7. Advanced Features
+Notification Preferences: Users can toggle categories.
+
+Role Management Dashboard: Admin can view all users and update roles.
+
+Analytics: Admin dashboard shows facility usage, booking trends, ticket resolution times.
+
+Auditability: All role-based actions logged and attributed to the correct user.
+
+End-to-End Flow
+User logs in via Google OAuth.
+
+User browses facilities catalogue → selects resource → submits booking request.
+
+Admin reviews booking → approves/rejects → notification sent to user.
+
+User raises a ticket → system routes it:
+
+Technician category → goes to Technician Dashboard.
+
+Non-technician category → goes to Admin Dashboard.
+
+Technician logs in → accepts/rejects ticket → notification sent to ticket owner.
+
+Technician updates status/resolution → facility status updated if needed → notification sent to user.
+
+Admin manages facilities (add/update/delete/status changes) → notifications update users.
+
+Users track everything via the notification panel.	
+
+Backend folder structure (springboot)
+
+
+backend/
+├── src/main/java/com/uniSpaceHub/demo/
+│   ├── DemoApplication.java   # Entry point
+│   ├── model/                 # Entities (tables)
+│   ├── repository/            # JPA repositories
+│   ├── service/               # Business logic
+│   ├── controller/            # REST APIs
+│   ├── dto/                   # Data Transfer Objects
+│   ├── exception/             # Custom exceptions + global handler
+│   └── config/                # Security, CORS, global beans
+│
+├── src/main/resources/
+│   ├── application.properties # DB config (Aiven MySQL)
+│   └── static/                # Optional static files
+│
+└── pom.xml                    # Maven dependencies
+
+Technologies Used:
+•	Spring Boot → backend framework
+•	Spring Data JPA → ORM for database access
+•	Hibernate → entity-to-table mapping
+•	MySQL (Aiven Cloud) → database
+•	Maven → build and dependency management
+•	REST APIs → communication with frontend
+
+Frontend folder structure (React )
+
+frontend/
+├── src/
+│   ├── components/    # Reusable UI components
+│   ├── pages/         # Page-level views (Dashboard, Login, etc.)
+│   ├── services/      # API calls (Axios/fetch to backend)
+│   ├── App.js         # Root React component
+│   └── index.js       # Entry point
+│
+├── public/            # Static assets (HTML, images)
+└── package.json       # Dependencies and scripts
+
+
+
+
+Technologies Used:
+•	React.js → frontend framework
+•	React Router → navigation between pages
+•	Axios/Fetch API → connect to backend REST APIs
+•	Redux (optional) → state management
+•	HTML/CSS/JSX → UI design
+•	Bootstrap/Material UI → styling and components
+
