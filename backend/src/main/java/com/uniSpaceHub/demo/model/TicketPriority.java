@@ -1,6 +1,6 @@
 package com.uniSpaceHub.demo.model;
 
-public enum Priority {
+public enum TicketPriority {
     LOW,
     MEDIUM,
     HIGH,
