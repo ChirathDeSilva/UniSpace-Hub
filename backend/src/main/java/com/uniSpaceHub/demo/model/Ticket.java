@@ -24,15 +24,15 @@ public class Ticket {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Category category;
+    private TicketCategory category;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Priority priority;
+    private TicketPriority priority;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Status status = Status.OPEN;
+    private TicketStatus status = TicketStatus.OPEN;
 
     @Column(nullable = false)
     private String location;
@@ -67,7 +67,7 @@ public class Ticket {
     public void onCreate() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
-        this.status = Status.OPEN;
+        this.status = TicketStatus.OPEN;
     }
 
     @PreUpdate
