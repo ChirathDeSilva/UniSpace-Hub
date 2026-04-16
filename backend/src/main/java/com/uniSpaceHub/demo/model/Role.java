@@ -1,7 +1,6 @@
 package com.uniSpaceHub.demo.model;
 
 import jakarta.persistence.*;
-import java.util.Objects;
 
 @Entity
 @Table(name = "roles")
@@ -11,12 +10,13 @@ public class Role {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(nullable = false, unique = true)
-    private String name; // e.g., ROLE_USER, ROLE_ADMIN, ROLE_TECHNICIAN
+    @Enumerated(EnumType.STRING) // Stores "ROLE_ADMIN" as a string in SQL
+    @Column(nullable = false, unique = true, length = 20)
+    private UserRole name; 
 
     public Role() {}
 
-    public Role(String name) {
+    public Role(UserRole name) {
         this.name = name;
     }
 
@@ -24,9 +24,11 @@ public class Role {
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
 
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    public UserRole getName() { return name; }
+    public void setName(UserRole name) { this.name = name; }
 
     @Override
-    public String toString() { return name; }
+    public String toString() { 
+        return name.name(); 
+    }
 }
