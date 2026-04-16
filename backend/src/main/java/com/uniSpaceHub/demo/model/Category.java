@@ -1,6 +1,6 @@
 package com.uniSpaceHub.demo.model;
 
-public enum TicketCategory {
+public enum Category {
     ELECTRICAL,
     PLUMBING,
     CLEANING,

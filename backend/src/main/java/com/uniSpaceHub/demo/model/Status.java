@@ -1,6 +1,6 @@
 package com.uniSpaceHub.demo.model;
 
-public enum TicketStatus {
+public enum Status {
     OPEN,
     IN_PROGRESS,
     RESOLVED,
