@@ -3,6 +3,13 @@
     "configurations": [
         {
             "type": "java",
+            "name": "DemoApplication",
+            "request": "launch",
+            "mainClass": "com.uniSpaceHub.demo.DemoApplication",
+            "projectName": "demo"
+        },
+        {
+            "type": "java",
             "name": "UniSpaceHubApplication",
             "request": "launch",
             "mainClass": "com.uniSpaceHub.demo.UniSpaceHubApplication",
