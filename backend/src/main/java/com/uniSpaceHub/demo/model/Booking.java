@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "bookings", indexes = {
-    @Index(name = "idx_resource_date", columnList = "resource_id, date"),
+    @Index(name = "idx_facility_date", columnList = "facility_id, date"),
     @Index(name = "idx_user_id", columnList = "user_id"),
     @Index(name = "idx_status", columnList = "status")
 })
@@ -57,10 +57,10 @@ public class Booking {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @NotNull(message = "Resource is required")
+    @NotNull(message = "Facility is required")
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "resource_id", nullable = false)
-    private Resource resource;
+    @JoinColumn(name = "facility_id", nullable = false)
+    private Facility facility;
 
     // Audit Fields
     @Column(nullable = false, updatable = false)
@@ -129,8 +129,8 @@ public class Booking {
     public User getUser() { return user; }
     public void setUser(User user) { this.user = user; }
 
-    public Resource getResource() { return resource; }
-    public void setResource(Resource resource) { this.resource = resource; }
+    public Facility getFacility() { return facility; }
+    public void setFacility(Facility facility) { this.facility = facility; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
