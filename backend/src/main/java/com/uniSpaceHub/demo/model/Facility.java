@@ -1,9 +1,15 @@
 package com.uniSpaceHub.demo.model;
 
 import jakarta.persistence.*;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED) // Each subclass gets its own table
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public abstract class Facility {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -17,12 +23,13 @@ public abstract class Facility {
 
     @Enumerated(EnumType.STRING)
     private FacilityStatus status; // Available, Booked, Maintenance, Not in Service
-
-    // getters and setters
 }
 
 // Academic Facilities
 @Entity
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 class LectureHall extends Facility {
     private int totalSeats;
     private int availableSeats;
@@ -30,6 +37,9 @@ class LectureHall extends Facility {
 }
 
 @Entity
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 class Lab extends Facility {
     private String labType; // Chemistry, Computer, etc.
     private int capacity;
@@ -37,6 +47,9 @@ class Lab extends Facility {
 }
 
 @Entity
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 class LibraryArea extends Facility {
     private int totalSeats;
     private int availableSeats;
@@ -44,6 +57,9 @@ class LibraryArea extends Facility {
 }
 
 @Entity
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 class ConferenceRoom extends Facility {
     private int capacity;
     private boolean projectorAvailable;
@@ -52,6 +68,9 @@ class ConferenceRoom extends Facility {
 
 // Sports & Recreation Facilities
 @Entity
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 class SportArea extends Facility {
     private String sportType; // Football, Basketball, Tennis, Swimming, Badminton, etc.
     private int capacity;
@@ -61,6 +80,9 @@ class SportArea extends Facility {
 
 // Equipment Facilities
 @Entity
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 class Equipment extends Facility {
     private String equipmentType;   // e.g., Projector, Basketball, Laptop
     private int totalQuantity;      // total items available
@@ -68,9 +90,11 @@ class Equipment extends Facility {
 }
 
 // Administrative / Utility Facilities
-
 @Entity
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 class Auditorium extends Facility {
     private int seatingCapacity;
     private String availableTime;
-} 
+}
