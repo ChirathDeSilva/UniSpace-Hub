@@ -5,11 +5,15 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
+
+
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED) // Each subclass gets its own table
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+
+
 public abstract class Facility {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,6 +27,15 @@ public abstract class Facility {
 
     @Enumerated(EnumType.STRING)
     private FacilityStatus status; // Available, Booked, Maintenance, Not in Service
+
+     // Explicit getters/setters
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
 }
 
 // Academic Facilities
