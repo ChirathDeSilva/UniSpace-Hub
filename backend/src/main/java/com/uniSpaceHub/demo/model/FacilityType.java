@@ -5,7 +5,6 @@ public enum FacilityType {
     LAB,
     SPORTAREA,
     EQUIPMENT,
-    LIBRARY,
     CONFERENCE,
     AUDITORIUM,
     MAINHALL
