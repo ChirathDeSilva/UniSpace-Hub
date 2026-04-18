@@ -1,11 +1,20 @@
-package com.uniSpaceHub.demo.model;
+package com.uniSpaceHub.demo.model.Ticket;
 
 import jakarta.persistence.*;
-
 import java.time.LocalDateTime;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 
 @Entity
 @Table(name = "ticket_attachments")
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
 public class TicketAttachment {
 
     //  Primary Key
