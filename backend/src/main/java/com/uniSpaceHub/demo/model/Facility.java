@@ -4,8 +4,11 @@ import jakarta.persistence.*;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 
+
+
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED) // Each subclass gets its own table
+
 @JsonTypeInfo(
     use = JsonTypeInfo.Id.NAME,
     include = JsonTypeInfo.As.PROPERTY,
@@ -19,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
     @JsonSubTypes.Type(value = Equipment.class, name = "equipment"),
     @JsonSubTypes.Type(value = Auditorium.class, name = "auditorium")
 })
+
 public abstract class Facility {
 
     @Id
@@ -33,6 +37,7 @@ public abstract class Facility {
 
     @Enumerated(EnumType.STRING)
     private FacilityStatus status; // Available, Booked, Maintenance, Not in Service
+
 
     // Manual getters and setters
     public Long getId() { return id; }
@@ -49,6 +54,7 @@ public abstract class Facility {
 
     public FacilityStatus getStatus() { return status; }
     public void setStatus(FacilityStatus status) { this.status = status; }
+
 }
 
 // Academic Facilities
