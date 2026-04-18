@@ -1,11 +1,21 @@
-package com.uniSpaceHub.demo.model;
+package com.uniSpaceHub.demo.model.Ticket;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
+import com.uniSpaceHub.demo.model.User;
+
 @Entity
 @Table(name = "ticket_comments")
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
 public class TicketComment {
 
     // Primary Key
