@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 
+
+
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED) // Each subclass gets its own table
 @JsonTypeInfo(

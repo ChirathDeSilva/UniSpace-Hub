@@ -1,4 +1,4 @@
-package com.uniSpaceHub.demo.model;
+package com.uniSpaceHub.demo.model.Ticket;
 
 public enum TicketCategory {
     ELECTRICAL,

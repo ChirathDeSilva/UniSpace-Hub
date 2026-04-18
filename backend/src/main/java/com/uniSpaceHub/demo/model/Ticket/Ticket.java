@@ -1,20 +1,30 @@
-package com.uniSpaceHub.demo.model;
+package com.uniSpaceHub.demo.model.Ticket;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
+import com.uniSpaceHub.demo.model.User;
+
 @Entity
 @Table(name = "tickets")
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
 public class Ticket {
 
-    //  Primary Key
+    // Primary Key
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    //  Ticket Details
+    // Ticket Details
     @NotNull
     @Column(nullable = false)
     private String title;
@@ -32,14 +42,14 @@ public class Ticket {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private TicketStatus status = TicketStatus.OPEN;
+    private TicketStatus status;
 
     @Column(nullable = false)
     private String location;
 
     private String contactDetails;
 
-    //  Relationships
+    // Relationships
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by")
     private User createdBy;
@@ -48,14 +58,14 @@ public class Ticket {
     @JoinColumn(name = "assigned_to")
     private User assignedTo;
 
-    //  Resolution
+    // Resolution
     @Column(length = 1000)
     private String resolutionNotes;
 
     @Column(length = 500)
     private String rejectionReason;
 
-    //  Audit Fields
+    // Audit Fields
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -67,7 +77,9 @@ public class Ticket {
     public void onCreate() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
-        this.status = TicketStatus.OPEN;
+        if (this.status == null) {
+            this.status = TicketStatus.NEW;
+        }
     }
 
     @PreUpdate
