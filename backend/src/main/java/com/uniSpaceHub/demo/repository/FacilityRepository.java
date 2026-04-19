@@ -22,8 +22,7 @@ public interface FacilityRepository extends JpaRepository<Facility, Long> {
     // Find facilities by both type and status
     List<Facility> findByTypeAndStatus(FacilityType type, FacilityStatus status);
 
-    // Optional: search by name (case-insensitive contains)
-    List<Facility> findByNameContainingIgnoreCase(String name);
+        List<Facility> findByNameContainingIgnoreCase(String name);
 
     // Optional: search by location
     List<Facility> findByLocationContainingIgnoreCase(String location);
