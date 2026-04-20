@@ -13,7 +13,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import com.uniSpaceHub.demo.model.Facility;
+import com.uniSpaceHub.demo.model.FacilitiesModels.Facility;
 import com.uniSpaceHub.demo.model.User;
 
 @Builder
