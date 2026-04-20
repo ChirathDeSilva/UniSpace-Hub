@@ -1,7 +1,6 @@
-package com.uniSpaceHub.demo.service.booking;
+package com.uniSpaceHub.demo.service;
+
 import com.uniSpaceHub.demo.dto.booking.*;
-
-
 
 import java.util.List;
 

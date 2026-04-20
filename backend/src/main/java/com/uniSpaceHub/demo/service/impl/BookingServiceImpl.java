@@ -1,4 +1,4 @@
-package com.uniSpaceHub.demo.service.booking.impl;
+package com.uniSpaceHub.demo.service.impl;
 
 import com.uniSpaceHub.demo.dto.booking.*;
 import com.uniSpaceHub.demo.model.booking.Booking;
@@ -16,7 +16,7 @@ import com.uniSpaceHub.demo.repository.booking.BookingRepository;
 import com.uniSpaceHub.demo.repository.booking.BookingStatusHistoryRepository;
 import com.uniSpaceHub.demo.repository.UserRepository;
 import com.uniSpaceHub.demo.repository.FacilityRepository;
-import com.uniSpaceHub.demo.service.booking.BookingService;
+import com.uniSpaceHub.demo.service.BookingService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -75,16 +75,16 @@ public class BookingServiceImpl implements BookingService {
         log.info("Creating new booking for user {} on facility {}", request.getUserId(), request.getFacilityId());
 
         validateBookingRules(request.getBookingDate(), request.getStartTime(), request.getEndTime());
-        
-                checkForConflicts(request.getFacilityId(), request.getBookingDate(), request.getStartTime(),
+
+        checkForConflicts(request.getFacilityId(), request.getBookingDate(), request.getStartTime(),
                 request.getEndTime(), null);
 
-      
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + request.getUserId()));
-        
+
         Facility facility = facilityRepository.findById(request.getFacilityId())
-                .orElseThrow(() -> new IllegalArgumentException("Facility not found with ID: " + request.getFacilityId()));
+                .orElseThrow(
+                        () -> new IllegalArgumentException("Facility not found with ID: " + request.getFacilityId()));
 
         Booking booking = Booking.builder()
                 .bookingCode(generateUniqueCode())
@@ -103,7 +103,7 @@ public class BookingServiceImpl implements BookingService {
                 .build();
 
         Booking saved = bookingRepository.save(booking);
-        
+
         recordHistory(saved.getId(), null, BookingStatus.PENDING, request.getUserId().toString(), "Initial creation");
         return mapToResponse(saved);
     }
@@ -114,19 +114,19 @@ public class BookingServiceImpl implements BookingService {
         log.info("Updating booking {}", bookingCode);
         Booking booking = getBookingEntity(bookingCode);
 
-       
         if (booking.getStatus() != BookingStatus.PENDING) {
             throw new InvalidBookingStateException("Only PENDING bookings can be updated.");
         }
 
         validateBookingRules(request.getBookingDate(), request.getStartTime(), request.getEndTime());
-        
+
         checkForConflicts(request.getFacilityId(), request.getBookingDate(), request.getStartTime(),
                 request.getEndTime(), booking.getId());
 
         Facility facility = facilityRepository.findById(request.getFacilityId())
-                .orElseThrow(() -> new IllegalArgumentException("Facility not found with ID: " + request.getFacilityId()));
-        
+                .orElseThrow(
+                        () -> new IllegalArgumentException("Facility not found with ID: " + request.getFacilityId()));
+
         booking.setFacility(facility);
         booking.setFacilityId(request.getFacilityId());
         booking.setBookingDate(request.getBookingDate());
@@ -136,7 +136,7 @@ public class BookingServiceImpl implements BookingService {
         booking.setExpectedAttendees(request.getExpectedAttendees());
 
         Booking saved = bookingRepository.save(booking);
-        
+
         recordHistory(saved.getId(), BookingStatus.PENDING, BookingStatus.PENDING, booking.getUserId().toString(),
                 "User updated booking details");
         return mapToResponse(saved);
@@ -148,19 +148,18 @@ public class BookingServiceImpl implements BookingService {
         log.info("Cancelling booking {}", bookingCode);
         Booking booking = getBookingEntity(bookingCode);
 
-       
         if (booking.getStatus() != BookingStatus.APPROVED && booking.getStatus() != BookingStatus.PENDING) {
             throw new InvalidBookingStateException("Only APPROVED or PENDING bookings can be cancelled.");
         }
 
         BookingStatus oldStatus = booking.getStatus();
-        
+
         booking.setStatus(BookingStatus.CANCELLED);
         booking.setCancelledBy(cancelledBy);
         booking.setCancelledAt(LocalDateTime.now());
 
         Booking saved = bookingRepository.save(booking);
-        
+
         recordHistory(saved.getId(), oldStatus, BookingStatus.CANCELLED, cancelledBy, "User cancelled booking");
 
         return mapToResponse(saved);
@@ -189,7 +188,7 @@ public class BookingServiceImpl implements BookingService {
     @Transactional(readOnly = true)
     public BookingQrResponse getBookingQrToken(String bookingCode) {
         Booking booking = getBookingEntity(bookingCode);
-        
+
         if (booking.getStatus() != BookingStatus.APPROVED || booking.getQrToken() == null) {
             throw new InvalidBookingStateException("QR token is not available. Booking must be APPROVED.");
         }
@@ -205,16 +204,16 @@ public class BookingServiceImpl implements BookingService {
     private String generateQRCodeImageBase64(String token) {
         try {
             int width = 300, height = 300;
-            
+
             QRCodeWriter qrCodeWriter = new QRCodeWriter();
             BitMatrix bitMatrix = qrCodeWriter.encode(
-                    "CHECKIN_TOKEN:" + token,  
+                    "CHECKIN_TOKEN:" + token,
                     BarcodeFormat.QR_CODE, width, height);
 
             java.io.ByteArrayOutputStream pngOutputStream = new java.io.ByteArrayOutputStream();
             MatrixToImageWriter.writeToStream(bitMatrix, "PNG", pngOutputStream);
             byte[] pngData = pngOutputStream.toByteArray();
-            
+
             return "data:image/png;base64," + java.util.Base64.getEncoder().encodeToString(pngData);
         } catch (com.google.zxing.WriterException e) {
             log.error("Failed to encode QR code for token: {}", token, e);
@@ -225,7 +224,6 @@ public class BookingServiceImpl implements BookingService {
         }
     }
 
-    
     private void recordHistory(Long bookingId, BookingStatus oldStatus, BookingStatus newStatus, String changedBy,
             String reason) {
         historyRepository.save(BookingStatusHistory.builder()
@@ -238,14 +236,12 @@ public class BookingServiceImpl implements BookingService {
                 .build());
     }
 
- 
     private Booking getBookingEntity(String bookingCode) {
         return bookingRepository.findByBookingCode(bookingCode)
                 .orElseThrow(() -> new BookingNotFoundException("Booking specific code not found: " + bookingCode));
     }
 
-   
-            private void validateBookingRules(LocalDate date, java.time.LocalTime start, java.time.LocalTime end) {
+    private void validateBookingRules(LocalDate date, java.time.LocalTime start, java.time.LocalTime end) {
         if (date.isBefore(LocalDate.now())) {
             throw new InvalidBookingStateException("Booking date cannot be in the past.");
         }
@@ -254,8 +250,7 @@ public class BookingServiceImpl implements BookingService {
         }
     }
 
- 
-            private void checkForConflicts(Long facilityId, LocalDate date, java.time.LocalTime start,
+    private void checkForConflicts(Long facilityId, LocalDate date, java.time.LocalTime start,
             java.time.LocalTime end, Long excludeId) {
         List<Booking> conflicts = bookingRepository.findConflictingBookings(
                 facilityId, date, start, end, List.of(BookingStatus.APPROVED, BookingStatus.PENDING), excludeId);
@@ -265,8 +260,7 @@ public class BookingServiceImpl implements BookingService {
         }
     }
 
-  
-            private String generateUniqueCode() {
+    private String generateUniqueCode() {
         return "BKG-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }
 

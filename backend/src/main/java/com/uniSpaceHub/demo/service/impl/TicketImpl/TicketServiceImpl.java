@@ -1,5 +1,8 @@
 package com.uniSpaceHub.demo.service.impl.TicketImpl;
 
+import com.uniSpaceHub.demo.exception.Ticket.InvalidTicketStateException;
+import com.uniSpaceHub.demo.exception.Ticket.ResourceNotFoundException;
+import com.uniSpaceHub.demo.exception.Ticket.UnauthorizedActionException;
 import com.uniSpaceHub.demo.model.*;
 import com.uniSpaceHub.demo.model.Ticket.Ticket;
 import com.uniSpaceHub.demo.model.Ticket.TicketStatus;
@@ -32,7 +35,7 @@ public class TicketServiceImpl implements TicketService {
 
         // Fetch full user from DB using ID
         User user = userRepository.findById(ticket.getCreatedBy().getId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         // Set full user object
         ticket.setCreatedBy(user);
@@ -47,7 +50,7 @@ public class TicketServiceImpl implements TicketService {
     @Override
     public Ticket getTicketById(Long id) {
         return ticketRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Ticket not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
     }
 
     // GET ALL IDs
@@ -61,18 +64,18 @@ public class TicketServiceImpl implements TicketService {
     public Ticket claimTicket(Long ticketId, Long technicianId) {
 
         Ticket ticket = ticketRepository.findById(ticketId)
-                .orElseThrow(() -> new RuntimeException("Ticket not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
 
         if (ticket.getStatus() != TicketStatus.NEW) {
-            throw new RuntimeException("Only NEW tickets can be claimed");
+            throw new InvalidTicketStateException("Only NEW tickets can be claimed");
         }
 
         if (ticket.getAssignedTo() != null) {
-            throw new RuntimeException("Ticket already assigned");
+            throw new InvalidTicketStateException("Ticket already assigned");
         }
 
         User technician = userRepository.findById(technicianId)
-                .orElseThrow(() -> new RuntimeException("Technician not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Technician not found"));
 
         ticket.setAssignedTo(technician);
         ticket.setStatus(TicketStatus.OPEN);
@@ -85,12 +88,12 @@ public class TicketServiceImpl implements TicketService {
     public Ticket updateStatus(Long ticketId, TicketStatus newStatus, Long technicianId, String rejectionReason) {
 
         Ticket ticket = ticketRepository.findById(ticketId)
-                .orElseThrow(() -> new RuntimeException("Ticket not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
 
         // only assigned technician can update
         if (ticket.getAssignedTo() == null ||
                 !ticket.getAssignedTo().getId().equals(technicianId)) {
-            throw new RuntimeException("Only assigned technician can update this ticket");
+            throw new UnauthorizedActionException("Only assigned technician can update this ticket");
         }
 
         TicketStatus currentStatus = ticket.getStatus();
@@ -99,7 +102,7 @@ public class TicketServiceImpl implements TicketService {
 
             case OPEN:
                 if (newStatus != TicketStatus.IN_PROGRESS) {
-                    throw new RuntimeException("OPEN → only IN_PROGRESS allowed");
+                    throw new InvalidTicketStateException("OPEN to IN_PROGRESS only");
                 }
                 break;
 
@@ -113,7 +116,7 @@ public class TicketServiceImpl implements TicketService {
                 // rejection rule
                 if (newStatus == TicketStatus.REJECTED) {
                     if (rejectionReason == null || rejectionReason.isEmpty()) {
-                        throw new RuntimeException("Rejection reason required");
+                        throw new InvalidTicketStateException("Rejection reason required");
                     }
                     ticket.setRejectionReason(rejectionReason);
                 }
@@ -121,20 +124,20 @@ public class TicketServiceImpl implements TicketService {
                 if (newStatus != TicketStatus.RESOLVED &&
                         newStatus != TicketStatus.REJECTED &&
                         newStatus != TicketStatus.OPEN) {
-                    throw new RuntimeException("Invalid transition from IN_PROGRESS");
+                    throw new InvalidTicketStateException("Invalid transition from IN_PROGRESS");
                 }
                 break;
 
             case RESOLVED:
                 if (newStatus != TicketStatus.CLOSED) {
-                    throw new RuntimeException("RESOLVED → only CLOSED allowed");
+                    throw new InvalidTicketStateException("RESOLVED to CLOSED only");
                 }
                 break;
 
             case REJECTED:
             case CANCELLED:
             case CLOSED:
-                throw new RuntimeException("No further updates allowed");
+                throw new InvalidTicketStateException("No further updates allowed");
         }
 
         ticket.setStatus(newStatus);
@@ -146,16 +149,16 @@ public class TicketServiceImpl implements TicketService {
     public Ticket updateTicketByOwner(Long ticketId, Long userId, Ticket updatedTicket) {
 
         Ticket ticket = ticketRepository.findById(ticketId)
-                .orElseThrow(() -> new RuntimeException("Ticket not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
 
         if (!ticket.getCreatedBy().getId().equals(userId)) {
-            throw new RuntimeException("Only owner can update ticket");
+            throw new UnauthorizedActionException("Only owner can update ticket");
         }
 
         if (ticket.getStatus() != TicketStatus.NEW &&
                 ticket.getStatus() != TicketStatus.OPEN &&
                 ticket.getStatus() != TicketStatus.IN_PROGRESS) {
-            throw new RuntimeException("Ticket cannot be updated in current status");
+            throw new InvalidTicketStateException("Ticket cannot be updated in current status");
         }
 
         ticket.setTitle(updatedTicket.getTitle());
@@ -173,14 +176,14 @@ public class TicketServiceImpl implements TicketService {
     public Ticket cancelTicketByOwner(Long ticketId, Long userId) {
 
         Ticket ticket = ticketRepository.findById(ticketId)
-                .orElseThrow(() -> new RuntimeException("Ticket not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
 
         if (!ticket.getCreatedBy().getId().equals(userId)) {
-            throw new RuntimeException("Only owner can cancel ticket");
+            throw new UnauthorizedActionException("Only owner can cancel ticket");
         }
 
         if (ticket.getStatus() == TicketStatus.CLOSED) {
-            throw new RuntimeException("Closed ticket cannot be cancelled");
+            throw new InvalidTicketStateException("Closed ticket cannot be cancelled");
         }
 
         ticket.setStatus(TicketStatus.CANCELLED);
@@ -192,7 +195,7 @@ public class TicketServiceImpl implements TicketService {
     @Override
     public void deleteTicket(Long id) {
         if (!ticketRepository.existsById(id)) {
-            throw new RuntimeException("Ticket not found");
+            throw new ResourceNotFoundException("Ticket not found");
         }
         ticketRepository.deleteById(id);
     }

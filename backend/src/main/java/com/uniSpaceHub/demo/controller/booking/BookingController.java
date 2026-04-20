@@ -1,8 +1,7 @@
 package com.uniSpaceHub.demo.controller.booking;
 
-
 import com.uniSpaceHub.demo.dto.booking.*;
-import com.uniSpaceHub.demo.service.booking.BookingService;
+import com.uniSpaceHub.demo.service.BookingService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -261,7 +260,7 @@ public class BookingController {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-        // ─────────────────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────────
 
     /**
      * Retrieves the QR token sub-resource for an approved booking check-in.
