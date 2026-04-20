@@ -6,7 +6,7 @@ import com.uniSpaceHub.demo.model.booking.BookingCheckIn;
 import com.uniSpaceHub.demo.model.booking.BookingStatusHistory;
 import com.uniSpaceHub.demo.model.booking.BookingStatus;
 import com.uniSpaceHub.demo.model.User;
-import com.uniSpaceHub.demo.model.Facility;
+import com.uniSpaceHub.demo.model.FacilitiesModels.Facility;
 
 import com.uniSpaceHub.demo.exception.booking.BookingConflictException;
 import com.uniSpaceHub.demo.exception.booking.BookingNotFoundException;
