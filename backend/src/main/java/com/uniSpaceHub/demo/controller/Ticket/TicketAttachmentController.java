@@ -1,11 +1,16 @@
 package com.uniSpaceHub.demo.controller.Ticket;
 
-
+import com.uniSpaceHub.demo.dto.ticket.AddAttachmentRequest;
+import com.uniSpaceHub.demo.mapper.Ticket.TicketAttachmentMapper;
 import com.uniSpaceHub.demo.model.Ticket.TicketAttachment;
 import com.uniSpaceHub.demo.service.Ticket.TicketAttachmentService;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import jakarta.validation.Valid;
 
 import java.util.List;
 
@@ -16,14 +21,16 @@ public class TicketAttachmentController {
     @Autowired
     private TicketAttachmentService attachmentService;
 
-    @PostMapping
-    public TicketAttachment add(@RequestParam Long ticketId,
-                                @RequestParam String fileName,
-                                @RequestParam String fileType,
-                                @RequestParam String filePath,
-                                @RequestParam Long fileSize) {
+    @Autowired
+    private TicketAttachmentMapper ticketAttachmentMapper;
 
-        return attachmentService.addAttachment(ticketId, fileName, fileType, filePath, fileSize);
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public TicketAttachment add(@Valid @ModelAttribute AddAttachmentRequest request,
+            @RequestParam("file") MultipartFile file) {
+
+        return attachmentService.addAttachment(
+                ticketAttachmentMapper.toTicketId(request),
+                file);
     }
 
     @GetMapping("/{ticketId}")
@@ -32,7 +39,7 @@ public class TicketAttachmentController {
     }
 
     @DeleteMapping("/{attachmentId}")
-    public void delete(@PathVariable Long attachmentId, @RequestParam Long userId) {
-        attachmentService.deleteAttachment(attachmentId, userId);
+    public void delete(@PathVariable Long attachmentId) {
+        attachmentService.deleteAttachment(attachmentId);
     }
 }

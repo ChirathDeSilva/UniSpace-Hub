@@ -1,5 +1,9 @@
 package com.uniSpaceHub.demo.service.impl.TicketImpl;
 
+import com.uniSpaceHub.demo.exception.Ticket.BadRequestException;
+import com.uniSpaceHub.demo.exception.Ticket.InvalidTicketStateException;
+import com.uniSpaceHub.demo.exception.Ticket.ResourceNotFoundException;
+import com.uniSpaceHub.demo.exception.Ticket.UnauthorizedActionException;
 import com.uniSpaceHub.demo.model.*;
 import com.uniSpaceHub.demo.model.Ticket.Ticket;
 import com.uniSpaceHub.demo.model.Ticket.TicketComment;
@@ -32,14 +36,14 @@ public class TicketCommentServiceImpl implements TicketCommentService {
     public TicketComment addComment(Long ticketId, Long userId, String message) {
 
         Ticket ticket = ticketRepository.findById(ticketId)
-                .orElseThrow(() -> new RuntimeException("Ticket not found"));
+            .orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         //VALIDATION: message required
         if (message == null || message.trim().isEmpty()) {
-            throw new RuntimeException("Comment message cannot be empty");
+            throw new BadRequestException("Comment message cannot be empty");
         }
 
         //STATUS VALIDATION
@@ -48,7 +52,7 @@ public class TicketCommentServiceImpl implements TicketCommentService {
             ticket.getStatus() != TicketStatus.REJECTED &&
             ticket.getStatus() != TicketStatus.CANCELLED) {
 
-            throw new RuntimeException("Comments not allowed in current status");
+            throw new InvalidTicketStateException("Comments not allowed in current status");
         }
 
         TicketComment comment = new TicketComment();
@@ -65,7 +69,7 @@ public class TicketCommentServiceImpl implements TicketCommentService {
     public List<TicketComment> getCommentsByTicket(Long ticketId) {
 
         ticketRepository.findById(ticketId)
-                .orElseThrow(() -> new RuntimeException("Ticket not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
 
         return commentRepository.findByTicketId(ticketId);
     }
@@ -76,11 +80,11 @@ public class TicketCommentServiceImpl implements TicketCommentService {
     public void deleteComment(Long commentId, Long userId) {
 
         TicketComment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new RuntimeException("Comment not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Comment not found"));
 
         //Only owner of comment can delete
         if (!comment.getUser().getId().equals(userId)) {
-            throw new RuntimeException("You can delete only your own comment");
+            throw new UnauthorizedActionException("You can delete only your own comment");
         }
 
         commentRepository.delete(comment);
