@@ -1,7 +1,7 @@
 package com.uniSpaceHub.demo.controller.booking;
 
 import com.uniSpaceHub.demo.dto.booking.*;
-import com.uniSpaceHub.demo.service.booking.AdminBookingService;
+import com.uniSpaceHub.demo.service.AdminBookingService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -15,17 +15,23 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
- * REST controller for administrator-level booking management ({@code /api/admin/bookings}).
+ * REST controller for administrator-level booking management
+ * ({@code /api/admin/bookings}).
  *
- * <p>Applies the same six REST architectural constraints as {@link BookingController}:</p>
+ * <p>
+ * Applies the same six REST architectural constraints as
+ * {@link BookingController}:
+ * </p>
  * <ul>
- *   <li><b>Stateless</b> — JWT-authenticated; no server session.</li>
- *   <li><b>Cacheable</b> — GET responses carry {@code Cache-Control: max-age};
- *       state-mutating PATCH/POST carry {@code no-store}.</li>
- *   <li><b>Uniform Interface / HATEOAS</b> — {@code _links} in responses + RFC 8288
- *       {@code Link} headers for navigation from both collection and item views.</li>
- *   <li><b>Layered System</b> — Additional ROLE_ADMIN security layer enforced before
- *       reaching this controller.</li>
+ * <li><b>Stateless</b> — JWT-authenticated; no server session.</li>
+ * <li><b>Cacheable</b> — GET responses carry {@code Cache-Control: max-age};
+ * state-mutating PATCH/POST carry {@code no-store}.</li>
+ * <li><b>Uniform Interface / HATEOAS</b> — {@code _links} in responses + RFC
+ * 8288
+ * {@code Link} headers for navigation from both collection and item views.</li>
+ * <li><b>Layered System</b> — Additional ROLE_ADMIN security layer enforced
+ * before
+ * reaching this controller.</li>
  * </ul>
  */
 @RestController
@@ -41,31 +47,32 @@ public class AdminBookingController {
 
     private Map<String, String> adminBookingLinks(String bookingId) {
         Map<String, String> links = new LinkedHashMap<>();
-        links.put("self",       "/api/admin/bookings/" + bookingId + "/review");
-        links.put("approve",    "/api/admin/bookings/" + bookingId + "/approve");
-        links.put("reject",     "/api/admin/bookings/" + bookingId + "/reject");
+        links.put("self", "/api/admin/bookings/" + bookingId + "/review");
+        links.put("approve", "/api/admin/bookings/" + bookingId + "/approve");
+        links.put("reject", "/api/admin/bookings/" + bookingId + "/reject");
         links.put("collection", "/api/admin/bookings");
         return links;
     }
 
     private String adminLinkHeader(String bookingId) {
         return String.format("</api/admin/bookings/%s/review>; rel=\"self\"", bookingId) + ", " +
-               String.format("</api/admin/bookings/%s/approve>; rel=\"approve\"", bookingId) + ", " +
-               String.format("</api/admin/bookings/%s/reject>; rel=\"reject\"", bookingId) + ", " +
-               "</api/admin/bookings>; rel=\"collection\"";
+                String.format("</api/admin/bookings/%s/approve>; rel=\"approve\"", bookingId) + ", " +
+                String.format("</api/admin/bookings/%s/reject>; rel=\"reject\"", bookingId) + ", " +
+                "</api/admin/bookings>; rel=\"collection\"";
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // READ — collection  (GET /api/admin/bookings)
+    // READ — collection (GET /api/admin/bookings)
     // ─────────────────────────────────────────────────────────────────────────
 
     /**
      * Retrieves all bookings for admin review, supporting optional filtering.
      *
      * <ul>
-     *   <li>{@code Cache-Control: max-age=30, private} (Cacheable).</li>
-     *   <li>Each item includes {@code _links} to its review, approve, and reject actions
-     *       (Uniform Interface — HATEOAS).</li>
+     * <li>{@code Cache-Control: max-age=30, private} (Cacheable).</li>
+     * <li>Each item includes {@code _links} to its review, approve, and reject
+     * actions
+     * (Uniform Interface — HATEOAS).</li>
      * </ul>
      *
      * @param filter Criteria to filter by status, date, or resource
@@ -80,9 +87,9 @@ public class AdminBookingController {
 
         list.forEach(b -> {
             Map<String, String> links = new LinkedHashMap<>();
-            links.put("self",    "/api/admin/bookings/" + b.getBookingCode() + "/review");
+            links.put("self", "/api/admin/bookings/" + b.getBookingCode() + "/review");
             links.put("approve", "/api/admin/bookings/" + b.getBookingCode() + "/approve");
-            links.put("reject",  "/api/admin/bookings/" + b.getBookingCode() + "/reject");
+            links.put("reject", "/api/admin/bookings/" + b.getBookingCode() + "/reject");
             b.setLinks(links);
         });
 
@@ -93,16 +100,16 @@ public class AdminBookingController {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // READ — single item review  (GET /api/admin/bookings/{bookingId}/review)
+    // READ — single item review (GET /api/admin/bookings/{bookingId}/review)
     // ─────────────────────────────────────────────────────────────────────────
 
     /**
      * Retrieves detailed booking information for administrative review.
      *
      * <ul>
-     *   <li>{@code Cache-Control: max-age=30, private} (Cacheable).</li>
-     *   <li>RFC 8288 {@code Link} header exposes available state-transition actions
-     *       (HATEOAS — the engine of application state).</li>
+     * <li>{@code Cache-Control: max-age=30, private} (Cacheable).</li>
+     * <li>RFC 8288 {@code Link} header exposes available state-transition actions
+     * (HATEOAS — the engine of application state).</li>
      * </ul>
      *
      * @param bookingId The unique booking code
@@ -120,13 +127,15 @@ public class AdminBookingController {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // STATE TRANSITION  (PATCH /api/admin/bookings/{bookingId}/approve)
+    // STATE TRANSITION (PATCH /api/admin/bookings/{bookingId}/approve)
     // ─────────────────────────────────────────────────────────────────────────
 
     /**
      * Approves a pending booking (state: PENDING → APPROVED).
      *
-     * <p>{@code Cache-Control: no-store} — state mutations must never be cached.</p>
+     * <p>
+     * {@code Cache-Control: no-store} — state mutations must never be cached.
+     * </p>
      *
      * @param bookingId The unique booking code
      * @param request   Admin remarks/notes
@@ -148,13 +157,15 @@ public class AdminBookingController {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // STATE TRANSITION  (PATCH /api/admin/bookings/{bookingId}/reject)
+    // STATE TRANSITION (PATCH /api/admin/bookings/{bookingId}/reject)
     // ─────────────────────────────────────────────────────────────────────────
 
     /**
      * Rejects a pending booking (state: PENDING → REJECTED).
      *
-     * <p>{@code Cache-Control: no-store} — state mutations must never be cached.</p>
+     * <p>
+     * {@code Cache-Control: no-store} — state mutations must never be cached.
+     * </p>
      *
      * @param bookingId The unique booking code
      * @param request   Rejection reason
@@ -176,16 +187,20 @@ public class AdminBookingController {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-        // ─────────────────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────────
 
     /**
      * Records a facility check-in by verifying the scanned QR token.
      *
-     * <p>A check-in is a <em>resource</em> — {@code POST} to a collection creates a new
+     * <p>
+     * A check-in is a <em>resource</em> — {@code POST} to a collection creates a
+     * new
      * subordinate record. {@code Cache-Control: no-store} prevents caching of the
-     * newly created check-in event.</p>
+     * newly created check-in event.
+     * </p>
      *
-     * @param request Payload containing the QR token scanned at the facility entrance
+     * @param request Payload containing the QR token scanned at the facility
+     *                entrance
      * @return 200 OK with check-in confirmation and booking details
      */
 
@@ -195,12 +210,13 @@ public class AdminBookingController {
 
         return ResponseEntity.ok()
                 .cacheControl(CacheControl.noStore())
-                .header("Link", "</api/admin/bookings/check-ins>; rel=\"self\", </api/admin/bookings>; rel=\"collection\"")
+                .header("Link",
+                        "</api/admin/bookings/check-ins>; rel=\"self\", </api/admin/bookings>; rel=\"collection\"")
                 .body(adminBookingService.verifyQrToken(request));
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-        // ─────────────────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────────
 
     /**
      * @deprecated Retained for backward compatibility.

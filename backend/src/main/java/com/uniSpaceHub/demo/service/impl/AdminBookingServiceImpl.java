@@ -1,4 +1,4 @@
-package com.uniSpaceHub.demo.service.booking.impl;
+package com.uniSpaceHub.demo.service.impl;
 
 import com.uniSpaceHub.demo.dto.booking.*;
 import com.uniSpaceHub.demo.model.booking.Booking;
@@ -12,7 +12,7 @@ import com.uniSpaceHub.demo.exception.booking.InvalidBookingStateException;
 import com.uniSpaceHub.demo.repository.booking.BookingCheckInRepository;
 import com.uniSpaceHub.demo.repository.booking.BookingRepository;
 import com.uniSpaceHub.demo.repository.booking.BookingStatusHistoryRepository;
-import com.uniSpaceHub.demo.service.booking.AdminBookingService;
+import com.uniSpaceHub.demo.service.AdminBookingService;
 
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
@@ -125,29 +125,26 @@ public class AdminBookingServiceImpl implements AdminBookingService {
         log.info("Approving booking {} (override allowed)", bookingCode);
         Booking booking = getBookingEntity(bookingCode);
 
-     
         if (booking.getStatus() == BookingStatus.CANCELLED) {
             throw new InvalidBookingStateException("Cancelled bookings cannot be approved.");
         }
 
-        
         if (booking.getStatus() != BookingStatus.APPROVED) {
             checkForConflicts(booking.getFacility().getId(), booking.getBookingDate(), booking.getStartTime(),
                     booking.getEndTime(), booking.getId());
         }
 
-        
         BookingStatus oldStatus = booking.getStatus();
-        
+
         booking.setStatus(BookingStatus.APPROVED);
         booking.setApprovedBy(request.getApprovedBy());
         booking.setApprovedAt(LocalDateTime.now());
         booking.setAdminDecisionReason(request.getAdminDecisionReason());
-        
+
         booking.setQrToken(UUID.randomUUID().toString());
 
         Booking saved = bookingRepository.save(booking);
-        
+
         recordHistory(saved.getId(), oldStatus, BookingStatus.APPROVED, request.getApprovedBy(),
                 request.getAdminDecisionReason());
 
@@ -160,22 +157,21 @@ public class AdminBookingServiceImpl implements AdminBookingService {
         log.info("Rejecting booking {} (override allowed)", bookingCode);
         Booking booking = getBookingEntity(bookingCode);
 
-        
         if (booking.getStatus() == BookingStatus.CANCELLED) {
             throw new InvalidBookingStateException("Cancelled bookings cannot be rejected.");
         }
 
         BookingStatus oldStatus = booking.getStatus();
-        
+
         booking.setStatus(BookingStatus.REJECTED);
         booking.setRejectedBy(request.getRejectedBy());
         booking.setRejectedAt(LocalDateTime.now());
         booking.setAdminDecisionReason(request.getAdminDecisionReason());
-        
+
         booking.setQrToken(null);
 
         Booking saved = bookingRepository.save(booking);
-        
+
         recordHistory(saved.getId(), oldStatus, BookingStatus.REJECTED, request.getRejectedBy(),
                 request.getAdminDecisionReason());
 
@@ -198,7 +194,6 @@ public class AdminBookingServiceImpl implements AdminBookingService {
             throw new InvalidBookingStateException("QR token is only valid for APPROVED bookings.");
         }
 
-        
         booking.setCheckedInAt(now);
         bookingRepository.save(booking);
 
@@ -214,7 +209,6 @@ public class AdminBookingServiceImpl implements AdminBookingService {
                 .build();
     }
 
-    
     private void recordHistory(Long bookingId, BookingStatus oldStatus, BookingStatus newStatus, String changedBy,
             String reason) {
         historyRepository.save(BookingStatusHistory.builder()
@@ -227,7 +221,6 @@ public class AdminBookingServiceImpl implements AdminBookingService {
                 .build());
     }
 
-  
     private BookingCheckIn recordCheckIn(Long bookingId, String token, CheckInStatus status, String failureReason) {
         return checkInRepository.save(BookingCheckIn.builder()
                 .bookingId(bookingId)
@@ -243,7 +236,6 @@ public class AdminBookingServiceImpl implements AdminBookingService {
                 .orElseThrow(() -> new BookingNotFoundException("Booking specific code not found: " + bookingCode));
     }
 
-    
     private void checkForConflicts(Long facilityId, LocalDate date, java.time.LocalTime start,
             java.time.LocalTime end, Long excludeId) {
         List<Booking> conflicts = bookingRepository.findConflictingBookings(
