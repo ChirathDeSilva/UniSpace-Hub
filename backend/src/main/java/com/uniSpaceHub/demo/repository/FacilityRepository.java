@@ -4,7 +4,7 @@ package com.uniSpaceHub.demo.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import com.uniSpaceHub.demo.model.Facility;
+import com.uniSpaceHub.demo.model.FacilitiesModels.Facility;
 import com.uniSpaceHub.demo.model.FacilityStatus;
 import com.uniSpaceHub.demo.model.FacilityType;
 
