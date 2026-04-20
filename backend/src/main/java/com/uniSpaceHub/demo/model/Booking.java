@@ -7,6 +7,9 @@ import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import java.time.LocalDate;
 import java.time.LocalTime;
+
+import com.uniSpaceHub.demo.model.FacilitiesModels.Facility;
+
 import java.time.LocalDateTime;
 
 @Entity
