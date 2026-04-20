@@ -1,6 +1,6 @@
 package com.uniSpaceHub.demo.service;
 
-import com.uniSpaceHub.demo.model.Facility;
+import com.uniSpaceHub.demo.model.FacilitiesModels.Facility;
 import com.uniSpaceHub.demo.model.FacilityStatus;
 import com.uniSpaceHub.demo.model.Timetable;
 import com.uniSpaceHub.demo.repository.FacilityRepository;

@@ -1,7 +1,7 @@
 package com.uniSpaceHub.demo.service;
 
 import com.uniSpaceHub.demo.model.FacilityType;
-import com.uniSpaceHub.demo.model.Facility;
+import com.uniSpaceHub.demo.model.FacilitiesModels.Facility;
 import com.uniSpaceHub.demo.model.FacilityStatus;
 import com.uniSpaceHub.demo.repository.FacilityRepository;
 import org.springframework.stereotype.Service;
@@ -17,7 +17,7 @@ public class FacilityService {
         this.facilityRepository = facilityRepository;
     }
 
-    // ✅ CRUD Operations
+    //  CRUD Operations
     public Facility createFacility(Facility facility) {
         return facilityRepository.save(facility);
     }

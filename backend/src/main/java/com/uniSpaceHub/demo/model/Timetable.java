@@ -3,9 +3,9 @@ package com.uniSpaceHub.demo.model;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
-import com.uniSpaceHub.demo.model.Facility;
+import com.uniSpaceHub.demo.model.FacilitiesModels.Facility;
 
-import com.uniSpaceHub.demo.model.Facility;
+
 
 @Entity
 @Table(name = "timetable")
