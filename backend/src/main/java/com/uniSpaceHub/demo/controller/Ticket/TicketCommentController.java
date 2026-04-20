@@ -1,10 +1,14 @@
 package com.uniSpaceHub.demo.controller.Ticket;
 
+import com.uniSpaceHub.demo.dto.ticket.AddCommentRequest;
+import com.uniSpaceHub.demo.mapper.Ticket.TicketCommentMapper;
 import com.uniSpaceHub.demo.model.Ticket.TicketComment;
 import com.uniSpaceHub.demo.service.Ticket.TicketCommentService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import jakarta.validation.Valid;
 
 import java.util.List;
 
@@ -15,12 +19,16 @@ public class TicketCommentController {
     @Autowired
     private TicketCommentService commentService;
 
-    @PostMapping
-    public TicketComment add(@RequestParam Long ticketId,
-            @RequestParam Long userId,
-            @RequestParam String message) {
+    @Autowired
+    private TicketCommentMapper ticketCommentMapper;
 
-        return commentService.addComment(ticketId, userId, message);
+    @PostMapping
+    public TicketComment add(@Valid @RequestBody AddCommentRequest request) {
+
+        return commentService.addComment(
+                ticketCommentMapper.toTicketId(request),
+                ticketCommentMapper.toUserId(request),
+                ticketCommentMapper.toMessage(request));
     }
 
     @GetMapping("/{ticketId}")

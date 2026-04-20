@@ -26,8 +26,7 @@ public class Timetable {
     @Column(name = "end_time", nullable = false)
     private LocalDateTime endTime;
 
-    // --- Getters and Setters ---
-    public Long getId() {
+        public Long getId() {
         return id;
     }
     public void setId(Long id) {
