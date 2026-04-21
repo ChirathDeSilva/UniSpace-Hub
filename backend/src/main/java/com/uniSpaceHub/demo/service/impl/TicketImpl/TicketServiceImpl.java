@@ -3,10 +3,16 @@ package com.uniSpaceHub.demo.service.impl.TicketImpl;
 import com.uniSpaceHub.demo.exception.Ticket.InvalidTicketStateException;
 import com.uniSpaceHub.demo.exception.Ticket.ResourceNotFoundException;
 import com.uniSpaceHub.demo.exception.Ticket.UnauthorizedActionException;
-import com.uniSpaceHub.demo.model.*;
+import com.uniSpaceHub.demo.model.FacilitiesModels.Facility;
+import com.uniSpaceHub.demo.model.FacilityStatus;
+import com.uniSpaceHub.demo.model.User;
+import com.uniSpaceHub.demo.model.UserRole;
 import com.uniSpaceHub.demo.model.Ticket.Ticket;
 import com.uniSpaceHub.demo.model.Ticket.TicketStatus;
+import com.uniSpaceHub.demo.model.Ticket.TicketWorkflowEvent;
+import com.uniSpaceHub.demo.repository.FacilityRepository;
 import com.uniSpaceHub.demo.repository.Ticket.TicketRepository;
+import com.uniSpaceHub.demo.repository.Ticket.TicketWorkflowEventRepository;
 import com.uniSpaceHub.demo.service.Ticket.TicketService;
 import com.uniSpaceHub.demo.repository.UserRepository;
 
@@ -24,6 +30,12 @@ public class TicketServiceImpl implements TicketService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private FacilityRepository facilityRepository;
+
+    @Autowired
+    private TicketWorkflowEventRepository ticketWorkflowEventRepository;
+
     // CREATE TICKET
     // @Override
     // public Ticket createTicket(Ticket ticket) {
@@ -33,17 +45,19 @@ public class TicketServiceImpl implements TicketService {
     @Override
     public Ticket createTicket(Ticket ticket) {
 
-        // Fetch full user from DB using ID
         User user = userRepository.findById(ticket.getCreatedBy().getId())
-            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        // Set full user object
         ticket.setCreatedBy(user);
+        if (ticket.getFacility() != null && ticket.getFacility().getId() != null) {
+            ticket.setFacility(resolveFacility(ticket.getFacility().getId()));
+        }
 
-        // logic
         ticket.setStatus(TicketStatus.NEW);
+        Ticket saved = ticketRepository.save(ticket);
+        logWorkflow(saved, user, "TICKET_CREATED", null, TicketStatus.NEW, null, null, null);
 
-        return ticketRepository.save(ticket);
+        return saved;
     }
 
     // GET BY ID
@@ -77,24 +91,28 @@ public class TicketServiceImpl implements TicketService {
         User technician = userRepository.findById(technicianId)
                 .orElseThrow(() -> new ResourceNotFoundException("Technician not found"));
 
+        if (!isAdmin(technician) && technician.getRole().getName() != UserRole.ROLE_TECHNICIAN) {
+            throw new UnauthorizedActionException("Only a technician or admin can claim tickets");
+        }
+
+        TicketStatus previousStatus = ticket.getStatus();
         ticket.setAssignedTo(technician);
         ticket.setStatus(TicketStatus.OPEN);
 
-        return ticketRepository.save(ticket);
+        Ticket saved = ticketRepository.save(ticket);
+        logWorkflow(saved, technician, "TICKET_CLAIMED", previousStatus, TicketStatus.OPEN, null, null, null);
+
+        return saved;
     }
 
-    // UPDATE STATUS (TECHNICIAN)
+    // UPDATE STATUS (ASSIGNED TECHNICIAN OR ADMIN)
     @Override
     public Ticket updateStatus(Long ticketId, TicketStatus newStatus, Long technicianId, String rejectionReason) {
 
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
-
-        // only assigned technician can update
-        if (ticket.getAssignedTo() == null ||
-                !ticket.getAssignedTo().getId().equals(technicianId)) {
-            throw new UnauthorizedActionException("Only assigned technician can update this ticket");
-        }
+        User actor = resolveUser(technicianId, "Actor not found");
+        ensureAssignedTechnicianOrAdmin(ticket, actor);
 
         TicketStatus currentStatus = ticket.getStatus();
 
@@ -119,6 +137,8 @@ public class TicketServiceImpl implements TicketService {
                         throw new InvalidTicketStateException("Rejection reason required");
                     }
                     ticket.setRejectionReason(rejectionReason);
+                } else {
+                    ticket.setRejectionReason(null);
                 }
 
                 if (newStatus != TicketStatus.RESOLVED &&
@@ -141,7 +161,39 @@ public class TicketServiceImpl implements TicketService {
         }
 
         ticket.setStatus(newStatus);
-        return ticketRepository.save(ticket);
+        Ticket saved = ticketRepository.save(ticket);
+        logWorkflow(saved, actor, "TICKET_STATUS_UPDATED", currentStatus, newStatus, null, null, rejectionReason);
+        return saved;
+    }
+
+    @Override
+    public Ticket updateFacilityStatusForTicket(Long ticketId, Long actorUserId, FacilityStatus newStatus,
+            String note) {
+
+        Ticket ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
+        User actor = resolveUser(actorUserId, "Actor not found");
+
+        ensureAssignedTechnicianOrAdmin(ticket, actor);
+
+        if (ticket.getFacility() == null || ticket.getFacility().getId() == null) {
+            throw new InvalidTicketStateException("Ticket is not linked to a facility/resource");
+        }
+
+        Facility facility = resolveFacility(ticket.getFacility().getId());
+        validateFacilityStatusTransition(ticket, newStatus);
+
+        FacilityStatus previousStatus = facility.getStatus();
+        facility.setStatus(newStatus);
+        facilityRepository.save(facility);
+
+        ticket.setFacility(facility);
+        Ticket saved = ticketRepository.save(ticket);
+        logWorkflow(saved, actor, "FACILITY_STATUS_UPDATED", saved.getStatus(), saved.getStatus(), previousStatus,
+                newStatus,
+                note);
+
+        return saved;
     }
 
     // OWNER UPDATE TICKET
@@ -167,8 +219,15 @@ public class TicketServiceImpl implements TicketService {
         ticket.setPriority(updatedTicket.getPriority());
         ticket.setLocation(updatedTicket.getLocation());
         ticket.setContactDetails(updatedTicket.getContactDetails());
+        if (updatedTicket.getFacility() != null && updatedTicket.getFacility().getId() != null) {
+            ticket.setFacility(resolveFacility(updatedTicket.getFacility().getId()));
+        }
 
-        return ticketRepository.save(ticket);
+        Ticket saved = ticketRepository.save(ticket);
+        logWorkflow(saved, ticket.getCreatedBy(), "TICKET_UPDATED_BY_OWNER", saved.getStatus(), saved.getStatus(), null,
+                null,
+                "Owner updated ticket fields");
+        return saved;
     }
 
     // OWNER CANCEL TICKET
@@ -186,9 +245,14 @@ public class TicketServiceImpl implements TicketService {
             throw new InvalidTicketStateException("Closed ticket cannot be cancelled");
         }
 
+        TicketStatus previousStatus = ticket.getStatus();
         ticket.setStatus(TicketStatus.CANCELLED);
 
-        return ticketRepository.save(ticket);
+        Ticket saved = ticketRepository.save(ticket);
+        logWorkflow(saved, ticket.getCreatedBy(), "TICKET_CANCELLED_BY_OWNER", previousStatus, TicketStatus.CANCELLED,
+                null,
+                null, null);
+        return saved;
     }
 
     // DELETE
@@ -198,5 +262,73 @@ public class TicketServiceImpl implements TicketService {
             throw new ResourceNotFoundException("Ticket not found");
         }
         ticketRepository.deleteById(id);
+    }
+
+    private User resolveUser(Long userId, String notFoundMessage) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException(notFoundMessage));
+    }
+
+    private Facility resolveFacility(Long facilityId) {
+        return facilityRepository.findById(facilityId)
+                .orElseThrow(() -> new ResourceNotFoundException("Facility not found"));
+    }
+
+    private boolean isAdmin(User user) {
+        return user.getRole() != null && user.getRole().getName() == UserRole.ROLE_ADMIN;
+    }
+
+    private void ensureAssignedTechnicianOrAdmin(Ticket ticket, User actor) {
+        boolean assignedTechnician = ticket.getAssignedTo() != null
+                && ticket.getAssignedTo().getId().equals(actor.getId());
+
+        if (!assignedTechnician && !isAdmin(actor)) {
+            throw new UnauthorizedActionException("Only the assigned technician or an admin can perform this action");
+        }
+    }
+
+    private void validateFacilityStatusTransition(Ticket ticket, FacilityStatus newStatus) {
+        TicketStatus ticketStatus = ticket.getStatus();
+
+        if (newStatus == FacilityStatus.AVAILABLE) {
+            if (ticketStatus != TicketStatus.RESOLVED && ticketStatus != TicketStatus.CLOSED) {
+                throw new InvalidTicketStateException(
+                        "Facility can be set to AVAILABLE only when ticket is RESOLVED or CLOSED");
+            }
+            return;
+        }
+
+        if (newStatus == FacilityStatus.MAINTENANCE
+                || newStatus == FacilityStatus.NOT_IN_SERVICE) {
+            if (ticketStatus != TicketStatus.OPEN && ticketStatus != TicketStatus.IN_PROGRESS) {
+                throw new InvalidTicketStateException(
+                        "Facility can be set to MAINTENANCE/NOT_IN_SERVICE only when ticket is OPEN or IN_PROGRESS");
+            }
+            return;
+        }
+
+        throw new InvalidTicketStateException(
+                "Unsupported facility status for ticket workflow. Use MAINTENANCE, NOT_IN_SERVICE, or AVAILABLE");
+    }
+
+    private void logWorkflow(
+            Ticket ticket,
+            User actor,
+            String actionType,
+            TicketStatus previousTicketStatus,
+            TicketStatus newTicketStatus,
+            FacilityStatus previousFacilityStatus,
+            FacilityStatus newFacilityStatus,
+            String note) {
+        TicketWorkflowEvent event = new TicketWorkflowEvent();
+        event.setTicket(ticket);
+        event.setActor(actor);
+        event.setActionType(actionType);
+        event.setPreviousTicketStatus(previousTicketStatus);
+        event.setNewTicketStatus(newTicketStatus);
+        event.setPreviousFacilityStatus(previousFacilityStatus);
+        event.setNewFacilityStatus(newFacilityStatus);
+        event.setNote(note);
+        ticketWorkflowEventRepository.save(event);
     }
 }

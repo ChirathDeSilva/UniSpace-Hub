@@ -9,6 +9,7 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 
+import com.uniSpaceHub.demo.model.FacilitiesModels.Facility;
 import com.uniSpaceHub.demo.model.User;
 
 @Entity
@@ -57,6 +58,10 @@ public class Ticket {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assigned_to")
     private User assignedTo;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "facility_id")
+    private Facility facility;
 
     // Resolution
     @Column(length = 1000)

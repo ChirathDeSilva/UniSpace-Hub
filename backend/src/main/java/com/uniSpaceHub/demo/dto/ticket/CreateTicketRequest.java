@@ -30,4 +30,6 @@ public class CreateTicketRequest {
     private String location;
 
     private String contactDetails;
+
+    private Long facilityId;
 }
