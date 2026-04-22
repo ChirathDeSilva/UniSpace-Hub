@@ -3,6 +3,7 @@ package com.uniSpaceHub.demo.controller.Ticket;
 import com.uniSpaceHub.demo.dto.ticket.CancelTicketRequest;
 import com.uniSpaceHub.demo.dto.ticket.ClaimTicketRequest;
 import com.uniSpaceHub.demo.dto.ticket.CreateTicketRequest;
+import com.uniSpaceHub.demo.dto.ticket.UpdateTicketFacilityStatusRequest;
 import com.uniSpaceHub.demo.dto.ticket.UpdateTicketRequest;
 import com.uniSpaceHub.demo.dto.ticket.UpdateTicketStatusRequest;
 import com.uniSpaceHub.demo.mapper.Ticket.TicketMapper;
@@ -51,6 +52,16 @@ public class TicketController {
             @Valid @RequestBody UpdateTicketStatusRequest request) {
 
         return ticketService.updateStatus(id, request.getStatus(), request.getTechnicianId(), request.getReason());
+    }
+
+    @PutMapping("/{id}/facility-status")
+    public Ticket updateFacilityStatus(@PathVariable Long id,
+            @Valid @RequestBody UpdateTicketFacilityStatusRequest request) {
+        return ticketService.updateFacilityStatusForTicket(
+                id,
+                request.getActorUserId(),
+                request.getFacilityStatus(),
+                request.getNote());
     }
 
     @PutMapping("/{id}/update")
