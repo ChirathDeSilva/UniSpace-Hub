@@ -1,6 +1,7 @@
 package com.uniSpaceHub.demo.service.Ticket;
 
 import com.uniSpaceHub.demo.model.FacilityStatus;
+import com.uniSpaceHub.demo.model.Ticket.SlaStatus;
 import com.uniSpaceHub.demo.model.Ticket.Ticket;
 import com.uniSpaceHub.demo.model.Ticket.TicketStatus;
 
@@ -13,6 +14,8 @@ public interface TicketService {
     Ticket getTicketById(Long id);
 
     List<Ticket> getAllTickets();
+
+    List<Ticket> getSlaDashboardTickets(Long userId);
 
     Ticket claimTicket(Long ticketId, Long technicianId);
 

@@ -10,6 +10,8 @@ import com.uniSpaceHub.demo.model.UserRole;
 import com.uniSpaceHub.demo.model.Ticket.Ticket;
 import com.uniSpaceHub.demo.model.Ticket.TicketStatus;
 import com.uniSpaceHub.demo.model.Ticket.TicketWorkflowEvent;
+import com.uniSpaceHub.demo.model.Ticket.SlaStatus;
+import com.uniSpaceHub.demo.model.Ticket.TicketPriority;
 import com.uniSpaceHub.demo.repository.FacilityRepository;
 import com.uniSpaceHub.demo.repository.Ticket.TicketRepository;
 import com.uniSpaceHub.demo.repository.Ticket.TicketWorkflowEventRepository;
@@ -19,6 +21,8 @@ import com.uniSpaceHub.demo.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -54,6 +58,7 @@ public class TicketServiceImpl implements TicketService {
         }
 
         ticket.setStatus(TicketStatus.NEW);
+        initializeSla(ticket, LocalDateTime.now());
         Ticket saved = ticketRepository.save(ticket);
         logWorkflow(saved, user, "TICKET_CREATED", null, TicketStatus.NEW, null, null, null);
 
@@ -71,6 +76,22 @@ public class TicketServiceImpl implements TicketService {
     @Override
     public List<Ticket> getAllTickets() {
         return ticketRepository.findAll();
+    }
+
+    @Override
+    public List<Ticket> getSlaDashboardTickets(Long userId) {
+        User user = resolveUser(userId, "User not found");
+        List<SlaStatus> dashboardStatuses = List.of(SlaStatus.SLA_AT_RISK, SlaStatus.SLA_BREACHED);
+
+        if (isAdmin(user)) {
+            return ticketRepository.findBySlaStatusIn(dashboardStatuses);
+        }
+
+        if (user.getRole() != null && user.getRole().getName() == UserRole.ROLE_TECHNICIAN) {
+            return ticketRepository.findByAssignedToIdAndSlaStatusIn(user.getId(), dashboardStatuses);
+        }
+
+        throw new UnauthorizedActionException("Only admins or technicians can access the SLA dashboard");
     }
 
     // CLAIM TICKET (TECHNICIAN)
@@ -330,5 +351,30 @@ public class TicketServiceImpl implements TicketService {
         event.setNewFacilityStatus(newFacilityStatus);
         event.setNote(note);
         ticketWorkflowEventRepository.save(event);
+    }
+
+    private void initializeSla(Ticket ticket, LocalDateTime startTime) {
+        ticket.setSlaStartTime(startTime);
+        ticket.setSlaDeadline(startTime.plus(resolveSlaDuration(ticket.getPriority())));
+        ticket.setSlaStatus(SlaStatus.SLA_OK);
+        ticket.setBreachedAt(null);
+    }
+
+    private Duration resolveSlaDuration(TicketPriority priority) {
+        if (priority == null) {
+            return Duration.ofHours(24);
+        }
+
+        switch (priority) {
+            case HIGH:
+            case URGENT:
+                return Duration.ofHours(4);
+            case MEDIUM:
+                return Duration.ofHours(24);
+            case LOW:
+                return Duration.ofHours(72);
+            default:
+                return Duration.ofHours(24);
+        }
     }
 }
