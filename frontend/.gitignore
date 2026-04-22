@@ -22,3 +22,18 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Test output
+coverage/
+.nyc_output/
+
+# Cache and build metadata
+.cache/
+.parcel-cache/
+.eslintcache
+*.tsbuildinfo

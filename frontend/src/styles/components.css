@@ -1,0 +1,216 @@
+.btn {
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.95rem;
+  line-height: 1;
+  padding: 0.7rem 1.1rem;
+  transition:
+    transform var(--motion-fast) var(--ease-standard),
+    box-shadow var(--motion-fast) var(--ease-standard),
+    background-color var(--motion-fast) var(--ease-standard),
+    color var(--motion-fast) var(--ease-standard);
+}
+
+.btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background-color: var(--color-primary);
+  color: #fff;
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #0044a8;
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background-color: #fff;
+  color: var(--color-primary-strong);
+  border-color: var(--color-border);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: #f7fbff;
+}
+
+.btn-ghost {
+  background-color: transparent;
+  color: var(--color-primary-strong);
+}
+
+.field {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.field label {
+  font-weight: 600;
+  color: var(--color-primary-strong);
+}
+
+.field input,
+.field select,
+.field textarea {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: #fff;
+  min-height: 2.75rem;
+  padding: 0.65rem 0.8rem;
+  color: var(--color-text-primary);
+  transition: border-color var(--motion-fast) var(--ease-standard);
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(0, 86, 210, 0.12);
+}
+
+.field-error {
+  color: var(--color-error);
+  font-size: 0.875rem;
+}
+
+.card {
+  background-color: #fff;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-6);
+}
+
+.spinner {
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 999px;
+  border: 2px solid rgba(0, 86, 210, 0.2);
+  border-top-color: var(--color-primary);
+  animation: spin 700ms linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.app-navbar {
+  background: #fff;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.app-navbar-inner {
+  min-height: 4rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.app-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+}
+
+.app-nav a {
+  color: var(--color-primary-strong);
+  font-weight: 600;
+}
+
+.app-nav a:hover {
+  color: var(--color-primary);
+}
+
+.app-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.icon-button {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background-color: #fff;
+  color: var(--color-primary-strong);
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color var(--motion-fast) var(--ease-standard);
+}
+
+.icon-button:hover {
+  background-color: var(--color-primary-soft);
+}
+
+.brand {
+  color: var(--color-primary-strong);
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+.layout-body {
+  flex: 1;
+  padding-block: var(--space-8);
+}
+
+.app-footer {
+  border-top: 1px solid var(--color-border);
+  background-color: #fff;
+}
+
+.app-footer-inner {
+  min-height: 3.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.app-footer-inner p {
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+}
+
+@media (max-width: 768px) {
+  .app-navbar-inner {
+    min-height: auto;
+    padding-block: var(--space-3);
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .app-nav {
+    justify-content: flex-start;
+    gap: var(--space-3);
+  }
+
+  .app-nav-actions {
+    align-self: flex-end;
+  }
+
+  .app-footer-inner {
+    min-height: auto;
+    padding-block: var(--space-3);
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .card {
+    padding: var(--space-4);
+  }
+}
