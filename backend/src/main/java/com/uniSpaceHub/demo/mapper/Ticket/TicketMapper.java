@@ -4,6 +4,7 @@ import org.springframework.stereotype.Component;
 
 import com.uniSpaceHub.demo.dto.ticket.CreateTicketRequest;
 import com.uniSpaceHub.demo.dto.ticket.UpdateTicketRequest;
+import com.uniSpaceHub.demo.model.FacilitiesModels.Facility;
 import com.uniSpaceHub.demo.model.User;
 import com.uniSpaceHub.demo.model.Ticket.Ticket;
 
@@ -13,9 +14,15 @@ public class TicketMapper {
     public Ticket toEntity(CreateTicketRequest request) {
         Ticket ticket = new Ticket();
         User createdBy = new User();
+        Facility facility = new Facility() {
+        };
 
         createdBy.setId(request.getCreatedByUserId());
         ticket.setCreatedBy(createdBy);
+        if (request.getFacilityId() != null) {
+            facility.setId(request.getFacilityId());
+            ticket.setFacility(facility);
+        }
         applyUpdatableFields(ticket, request.getTitle(), request.getDescription(), request.getCategory(),
                 request.getPriority(), request.getLocation(), request.getContactDetails());
 
@@ -24,6 +31,12 @@ public class TicketMapper {
 
     public Ticket toEntity(UpdateTicketRequest request) {
         Ticket ticket = new Ticket();
+        if (request.getFacilityId() != null) {
+            Facility facility = new Facility() {
+            };
+            facility.setId(request.getFacilityId());
+            ticket.setFacility(facility);
+        }
         applyUpdatableFields(ticket, request.getTitle(), request.getDescription(), request.getCategory(),
                 request.getPriority(), request.getLocation(), request.getContactDetails());
         return ticket;
