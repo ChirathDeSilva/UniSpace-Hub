@@ -1,0 +1,41 @@
+.container {
+  width: min(100% - 2rem, var(--container-max));
+  margin-inline: auto;
+}
+
+.stack {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.cluster {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.text-muted {
+  color: var(--color-text-secondary);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.page-section {
+  padding-block: clamp(2rem, 1.5rem + 1.2vw, 4rem);
+}
+
+@media (max-width: 768px) {
+  .container {
+    width: min(100% - 1.25rem, var(--container-max));
+  }
+}
