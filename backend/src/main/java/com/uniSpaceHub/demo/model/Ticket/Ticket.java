@@ -45,6 +45,19 @@ public class Ticket {
     @Column(nullable = false)
     private TicketStatus status;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private SlaStatus slaStatus;
+
+    @Column
+    private LocalDateTime slaStartTime;
+
+    @Column
+    private LocalDateTime slaDeadline;
+
+    @Column
+    private LocalDateTime breachedAt;
+
     @Column(nullable = false)
     private String location;
 
@@ -84,6 +97,9 @@ public class Ticket {
         this.updatedAt = LocalDateTime.now();
         if (this.status == null) {
             this.status = TicketStatus.NEW;
+        }
+        if (this.slaStatus == null) {
+            this.slaStatus = SlaStatus.SLA_OK;
         }
     }
 

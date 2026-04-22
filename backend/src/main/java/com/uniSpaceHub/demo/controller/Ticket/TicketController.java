@@ -37,6 +37,11 @@ public class TicketController {
         return ticketService.getAllTickets();
     }
 
+    @GetMapping("/sla-dashboard")
+    public List<Ticket> getSlaDashboard(@RequestParam("userId") Long userId) {
+        return ticketService.getSlaDashboardTickets(userId);
+    }
+
     @GetMapping("/{id}")
     public Ticket getById(@PathVariable Long id) {
         return ticketService.getTicketById(id);
