@@ -1,29 +1,56 @@
-import { Link, Outlet } from 'react-router-dom'
+import { NavLink, Outlet } from 'react-router-dom'
+
+const primaryNavItems = [
+  { to: '/', label: 'Home' },
+  { to: '/facility-portal', label: 'Facility Portal' },
+  { to: '/ticketing', label: 'Ticketing' },
+  { to: '/booking', label: 'Facility Booking' },
+  { to: '/contact-us', label: 'Contact Us' },
+  { to: '/about-us', label: 'About Us' },
+]
 
 export default function PublicLayout() {
   const year = new Date().getFullYear()
 
   return (
     <div className="app-shell">
-      <header className="app-navbar">
+      <header className="app-navbar app-navbar-public">
         <div className="container app-navbar-inner">
-          <Link to="/" className="brand">
-            Uni Space Hub
-          </Link>
-          <nav className="app-nav" aria-label="Primary">
-            <Link to="/">Home</Link>
-            <Link to="/ticketing">Ticketing</Link>
-            <Link to="/booking">Booking</Link>
-            <Link to="/contact-us">Contact Us</Link>
-            <Link to="/about-us">About Us</Link>
-          </nav>
-          <div className="app-nav-actions" aria-label="User actions">
-            <button type="button" className="icon-button" aria-label="Notifications">
-              N
-            </button>
-            <button type="button" className="icon-button" aria-label="User profile">
+          <NavLink to="/" className="brand" end>
+            <span className="brand-mark" aria-hidden="true">
               U
-            </button>
+            </span>
+            <span>Uni Space Hub</span>
+          </NavLink>
+
+          <nav className="app-nav" aria-label="Primary">
+            {primaryNavItems.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.to === '/'}
+                className={({ isActive }) => `app-nav-link${isActive ? ' is-active' : ''}`}
+              >
+                {item.label}
+              </NavLink>
+            ))}
+          </nav>
+
+          <div className="app-nav-actions" aria-label="Quick actions">
+            <NavLink
+              to="/notifications"
+              className={({ isActive }) => `icon-link${isActive ? ' is-active' : ''}`}
+              aria-label="Notifications"
+            >
+              <span aria-hidden="true">🔔</span>
+            </NavLink>
+            <NavLink
+              to="/profile"
+              className={({ isActive }) => `icon-link${isActive ? ' is-active' : ''}`}
+              aria-label="Profile"
+            >
+              <span aria-hidden="true">👤</span>
+            </NavLink>
           </div>
         </div>
       </header>
@@ -36,8 +63,20 @@ export default function PublicLayout() {
 
       <footer className="app-footer">
         <div className="container app-footer-inner">
-          <p>Uni Space Hub</p>
-          <p>Copyright {year}. All rights reserved.</p>
+          <div className="app-footer-brand stack">
+            <p className="footer-logo">Uni Space Hub</p>
+            <p className="footer-copy">One place for portal access, ticketing, and booking.</p>
+          </div>
+
+          <nav className="app-footer-links" aria-label="Footer quick links">
+            {primaryNavItems.map((item) => (
+              <NavLink key={`footer-${item.to}`} to={item.to} end={item.to === '/'}>
+                {item.label}
+              </NavLink>
+            ))}
+          </nav>
+
+          <p className="footer-copyright">Copyright {year} Uni Space Hub</p>
         </div>
       </footer>
     </div>
