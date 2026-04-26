@@ -1,4 +1,5 @@
 import Card from '../../components/ui/Card'
+import { Link } from 'react-router-dom'
 import bookingImage from '../../assets/home/facility-booking.svg'
 import portalImage from '../../assets/home/facility-portal.svg'
 import helpDeskImage from '../../assets/home/help-desk.svg'
@@ -11,13 +12,15 @@ const homeCards = [
       'Access a centralized portal to explore available spaces, services, and facility information for smooth campus operations.',
     image: portalImage,
     alt: 'Facility portal preview illustration',
+    to: '/facility-portal',
   },
   {
-    title: 'Help Desk',
+    title: 'Ticketing',
     description:
-      'Get quick assistance for technical and service requests, track support status, and communicate with the right team.',
+      'Get quick assistance for technical and service requests, track ticket progress, and connect with the right team.',
     image: helpDeskImage,
     alt: 'Help desk support illustration',
+    to: '/ticketing',
   },
   {
     title: 'Facility Booking',
@@ -25,6 +28,7 @@ const homeCards = [
       'Reserve classrooms, labs, and common areas with a clear schedule view designed for students, staff, and administrators.',
     image: bookingImage,
     alt: 'Facility booking calendar illustration',
+    to: '/booking',
   },
 ]
 
@@ -53,11 +57,13 @@ export default function HomePage() {
 
       <section className="home-card-grid" aria-label="Core modules">
         {homeCards.map((item) => (
-          <Card key={item.title} className="home-feature-card">
-            <img src={item.image} alt={item.alt} className="home-feature-image" />
-            <h3>{item.title}</h3>
-            <p>{item.description}</p>
-          </Card>
+          <Link key={item.title} to={item.to} className="home-feature-link" aria-label={`Open ${item.title}`}>
+            <Card className="home-feature-card">
+              <img src={item.image} alt={item.alt} className="home-feature-image" />
+              <h3>{item.title}</h3>
+              <p>{item.description}</p>
+            </Card>
+          </Link>
         ))}
       </section>
     </div>
