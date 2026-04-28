@@ -7,11 +7,11 @@ import jakarta.persistence.*;
 public class Role {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(nullable = true, unique = false)
     private Integer id;
 
     @Enumerated(EnumType.STRING) // Stores "ROLE_ADMIN" as a string in SQL
-    @Column(nullable = false, unique = true, length = 20)
+    @Column(nullable = true, unique = false, length = 20)
     private UserRole name; 
 
     public Role() {}
