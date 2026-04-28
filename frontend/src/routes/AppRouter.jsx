@@ -10,7 +10,7 @@ import AdminBookingHandlingPage from '../pages/admin/AdminBookingHandlingPage'
 import AdminFacilityListPage from '../pages/admin/AdminFacilityListPage'
 import AdminLoggingHandlingPage from '../pages/admin/AdminLoggingHandlingPage'
 import AdminTicketHandlingPage from '../pages/admin/AdminTicketHandlingPage'
-import BookingPage from '../pages/student/booking/BookingPage'
+import BookingPage from '../pages/student/booking/CreateBooking'
 import ContactUsPage from '../pages/contact/ContactUsPage'
 import DashboardHomePage from '../pages/dashboard/DashboardHomePage'
 import FacilityPortalPage from '../pages/facilityPortal/FacilityPortalPage'
@@ -22,6 +22,14 @@ import ProfilePage from '../pages/profile/ProfilePage'
 import TicketingPage from '../pages/ticketing/TicketingPage'
 import UnauthorizedPage from '../pages/common/UnauthorizedPage'
 
+import MyBookings from '../pages/student/booking/MyBookings'
+import BookingDetails from '../pages/student/booking/BookingDetails';
+import AdminBookingDashboard from '../pages/admin/booking/AdminBookingDashboard'
+import AdminBookingReview from '../pages/admin/booking/AdminBookingReview'
+import AdminBookingScanner from '../pages/admin/booking/AdminBookingScanner'
+import VerifyBooking from '../pages/student/booking/VerifyBooking'
+
+
 export default function AppRouter() {
   return (
     <Routes>
@@ -31,11 +39,22 @@ export default function AppRouter() {
         <Route path="/facility-portal" element={<FacilityPortalPage />} />
         <Route path="/ticketing" element={<TicketingPage />} />
         <Route path="/booking" element={<BookingPage />} />
+        <Route path="/student/booking" element={<MyBookings />} />
+        <Route path="/student/booking/new" element={<BookingPage />} />
         <Route path="/contact-us" element={<ContactUsPage />} />
         <Route path="/about-us" element={<AboutUsPage />} />
         <Route path="/notifications" element={<NotificationsPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/unauthorized" element={<UnauthorizedPage />} />
+
+        <Route path="/student/booking/my" element={<MyBookings />} /> 
+        <Route
+              path="/student/booking/:id"
+              element={<BookingDetails />}
+              
+            />
+        <Route path="/verify-booking/:token" element={<VerifyBooking />} />
+
       </Route>
 
       <Route element={<AdminRoute />}>
@@ -44,18 +63,35 @@ export default function AppRouter() {
           <Route path="/admin/add-facility" element={<AdminAddFacilityPage />} />
           <Route path="/admin/facility-list" element={<AdminFacilityListPage />} />
           <Route path="/admin/ticket-handling" element={<AdminTicketHandlingPage />} />
-          <Route path="/admin/booking-handling" element={<AdminBookingHandlingPage />} />
+          <Route path="/admin/booking-handling" element={<AdminBookingDashboard />} />
           <Route path="/admin/logging-handling" element={<AdminLoggingHandlingPage />} />
 
           <Route path="/admin/users" element={<Navigate to="/admin/facility-list" replace />} />
           <Route path="/admin/facilities" element={<Navigate to="/admin/facility-list" replace />} />
           <Route path="/admin/tickets" element={<Navigate to="/admin/ticket-handling" replace />} />
+        
+          <Route
+              path="/admin/booking/review/:id"
+              element={
+               
+                  <AdminBookingReview />
+                
+              }
+            />
+
+          <Route
+              path="/admin/booking/scanner"
+              element={
+                
+                  <AdminBookingScanner />
+              
+              }
+            />
+
+
+
         </Route>
       </Route>
-
-
-      --booking features
-      
 
       <Route element={<DashboardLayout />}>
         <Route path="/dashboard" element={<DashboardHomePage />} />

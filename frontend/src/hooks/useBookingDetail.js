@@ -73,7 +73,7 @@ export function useBookingDetail(bookingCode) {
 
   useEffect(() => {
     load();
-  }, [load]);
+  }, [load, bookingCode]);
 
   return {
     booking,

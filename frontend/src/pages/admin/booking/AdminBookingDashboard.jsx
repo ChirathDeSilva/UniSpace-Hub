@@ -1,114 +1,199 @@
-import { useEffect, useState } from "react";
-import {
-    getBookings,
-    approveBooking,
-    rejectBooking
-} from "../services/bookingService";
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { FaCalendarCheck, FaChevronLeft, FaChevronRight, FaClipboardCheck, FaEdit, FaExclamationTriangle, FaInbox, FaQrcode, FaSearch } from 'react-icons/fa';
+import DashboardLayout from '../../../components/layouts/DashboardLayout';
+import { useAdminBookings, BOOKING_STATUSES } from '../../../hooks/useAdminBookings';
+import { formatCode, formatDate, formatTime } from '../../../utils/formatters';
+import './AdminBookingDashboard.css';
 
-export default function AdminDashboard() {
-    const [bookings, setBookings] = useState([]);
+const PAGE_SIZE = 10;
 
-    useEffect(() => {
-        loadBookings();
-    }, []);
+function StatusBadge({ status }) {
+  return <span className={`adb-badge adb-${status || 'PENDING'}`}>{status}</span>;
+}
 
-    const loadBookings = () => {
-        getBookings()
-            .then((res) => setBookings(res.data))
-            .catch((err) => console.log(err));
-    };
+function StatCard({ label, value }) {
+  return (
+    <div className="adb-stat-card">
+      <div className="adb-stat-value">{value}</div>
+      <div className="adb-stat-label">{label}</div>
+    </div>
+  );
+}
 
-    const handleApprove = (id) => {
-        if (!window.confirm("Approve this booking?")) return;
+export default function AdminBookingDashboard() {
+  const { bookings, filteredBookings, resourcesMap, setFilter, loading, error } = useAdminBookings();
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const [highlightedCode, setHighlightedCode] = useState(null);
+  const location = useLocation();
+  const rowRefs = useRef({});
 
-        approveBooking(id)
-            .then(() => {
-                alert("Booking approved");
-                loadBookings();
-            })
-            .catch((err) => console.log(err));
-    };
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const code = params.get('highlight');
+    if (code) {
+      setFilter('ALL');
+      setSearch(code);
+      setHighlightedCode(code);
+      const timer = setTimeout(() => setHighlightedCode(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [location.search, setFilter]);
 
-    const handleReject = (id) => {
-        const reason = prompt("Enter rejection reason:");
-        if (!reason) return;
+  useEffect(() => {
+    if (highlightedCode && rowRefs.current[highlightedCode]) {
+      const timer = setTimeout(() => {
+        rowRefs.current[highlightedCode].scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+    return undefined;
+  }, [highlightedCode]);
 
-        rejectBooking(id, reason)
-            .then(() => {
-                alert("Booking rejected");
-                loadBookings();
-            })
-            .catch((err) => console.log(err));
-    };
+  const counts = useMemo(() => ({
+    total: bookings.length,
+    pending: bookings.filter((b) => b.status === 'PENDING').length,
+    approved: bookings.filter((b) => b.status === 'APPROVED').length,
+    rejected: bookings.filter((b) => b.status === 'REJECTED').length,
+  }), [bookings]);
 
-    const getStatusColor = (status) => {
-        switch (status) {
-            case "APPROVED":
-                return "green";
-            case "PENDING":
-                return "orange";
-            case "REJECTED":
-                return "red";
-            case "CANCELLED":
-                return "gray";
-            default:
-                return "black";
-        }
-    };
+  const searched = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return filteredBookings;
 
-    return (
-        <div style={{ padding: "20px" }}>
-            <h2>Admin Dashboard</h2>
-
-            <table border="1" width="100%" cellPadding="10">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Purpose</th>
-                        <th>Date</th>
-                        <th>Time</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-                    {bookings.map((b) => (
-                        <tr key={b.id}>
-                            <td>{b.id}</td>
-                            <td>{b.purpose}</td>
-                            <td>{b.date}</td>
-                            <td>{b.startTime} - {b.endTime}</td>
-
-                            <td
-                                style={{
-                                    color: getStatusColor(b.status),
-                                    fontWeight: "bold"
-                                }}
-                            >
-                                {b.status}
-                            </td>
-
-                            <td>
-                                <button
-                                    onClick={() => handleApprove(b.id)}
-                                    disabled={b.status !== "PENDING"}
-                                    style={{ marginRight: "10px" }}
-                                >
-                                    Approve
-                                </button>
-
-                                <button
-                                    onClick={() => handleReject(b.id)}
-                                    disabled={b.status !== "PENDING"}
-                                >
-                                    Reject
-                                </button>
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div>
+    return filteredBookings.filter((b) =>
+      String(b.bookingCode || '').toLowerCase().includes(q) ||
+      String(resourcesMap[String(b.facilityId)] || '').toLowerCase().includes(q) ||
+      String(b.studentRegNumber || '').toLowerCase().includes(q) ||
+      String(b.studentName || '').toLowerCase().includes(q) ||
+      String(b.userId || '').toLowerCase().includes(q),
     );
+  }, [filteredBookings, resourcesMap, search]);
+
+  const totalPages = Math.max(1, Math.ceil(searched.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const pageSlice = searched.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
+  return (
+    <DashboardLayout title="Booking Management">
+      <div className="adb-page">
+        <div className="adb-container">
+          <div className="adb-header">
+            <div>
+              <p className="adb-kicker">Admin booking dashboard</p>
+              <h1>Reservation Log</h1>
+            </div>
+          </div>
+
+          <div className="adb-stats">
+            <StatCard label="Total Reservations" value={counts.total} />
+            <StatCard label="Pending Review" value={counts.pending} />
+            <StatCard label="Approved" value={counts.approved} />
+            <StatCard label="Rejected" value={counts.rejected} />
+          </div>
+
+          <div className="adb-toolbar">
+            <div className="adb-filters">
+              {BOOKING_STATUSES.map((status) => (
+                <button key={status} type="button" className="adb-filter-btn" onClick={() => { setFilter(status); setPage(1); }}>
+                  {status}
+                </button>
+              ))}
+            </div>
+
+            <div className="adb-search">
+              <FaSearch />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                placeholder="Search by code, name, or facility"
+              />
+            </div>
+          </div>
+
+          {loading && <div className="adb-message">Loading reservations...</div>}
+
+          {error && (
+            <div className="adb-message adb-message-error">
+              <FaExclamationTriangle />
+              <p>{error}</p>
+            </div>
+          )}
+
+          {!loading && !error && (
+            <div className="adb-table-wrap">
+              <div className="adb-results-summary">Showing {searched.length} results</div>
+
+              <table className="adb-table">
+                <thead>
+                  <tr>
+                    <th>Status</th>
+                    <th>Booking ID</th>
+                    <th>Student Reg ID</th>
+                    <th>Facility</th>
+                    <th>Date</th>
+                    <th>Time Slot</th>
+                    <th>QR Code</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pageSlice.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} className="adb-empty">
+                        <FaInbox /> No reservations found
+                      </td>
+                    </tr>
+                  ) : pageSlice.map((booking) => {
+                    const isPending = booking.status === 'PENDING';
+                    const isApproved = booking.status === 'APPROVED';
+                    const facilityName = resourcesMap[String(booking.facilityId)] || booking.facilityId;
+
+                    return (
+                      <tr key={booking.bookingCode} ref={(el) => { rowRefs.current[booking.bookingCode] = el; }} className={highlightedCode === booking.bookingCode ? 'adb-highlight' : ''}>
+                        <td><StatusBadge status={booking.status} /></td>
+                        <td>{formatCode(booking.bookingCode)}</td>
+                        <td>{booking.studentRegNumber || '—'}</td>
+                        <td>{facilityName}</td>
+                        <td>{formatDate(booking.bookingDate)}</td>
+                        <td>{formatTime(booking.startTime)} - {formatTime(booking.endTime)}</td>
+                        <td>
+                          {isApproved ? (
+                            <Link to={`/admin/booking/scanner?booking=${booking.bookingCode}`} className="adb-link"> <FaQrcode /> View QR </Link>
+                          ) : '—'}
+                        </td>
+                        <td>
+                          {isPending ? (
+                            <Link to={`/admin/booking/review/${booking.bookingCode}`} className="adb-link"><FaClipboardCheck /> Review</Link>
+                          ) : booking.status === 'CANCELLED' ? (
+                            <Link to={`/admin/booking/review/${booking.bookingCode}`} className="adb-link"><FaSearch /> View</Link>
+                          ) : (
+                            <Link to={`/admin/booking/review/${booking.bookingCode}`} className="adb-link"><FaEdit /> Update</Link>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+
+              {totalPages > 1 && (
+                <div className="adb-pagination">
+                  <button type="button" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={safePage === 1}>
+                    <FaChevronLeft />
+                  </button>
+                  <span>Page {safePage} of {totalPages}</span>
+                  <button type="button" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={safePage === totalPages}>
+                    <FaChevronRight />
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </DashboardLayout>
+  );
 }

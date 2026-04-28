@@ -8,10 +8,13 @@ import { bookingCache } from '../../../utils/bookingCache';
 import './CreateBooking.css';
 
 const DEMO_USER_ID = 1;
+
+// Fallback demo facilities - only used when API is unavailable
+// These match the inherited facility table structure
 const DEMO_FACILITIES = [
-  { id: 1, name: 'Main Lecture Hall', type: 'HALL', location: 'Block A', totalSeats: 120, availableTime: '08:00-17:00' },
-  { id: 2, name: 'Computer Lab 01', type: 'LAB', location: 'Block B', capacity: 40, availableTime: '08:00-18:00' },
-  { id: 3, name: 'Conference Room', type: 'CONFERENCE', location: 'Admin Building', capacity: 20, availableTime: '09:00-16:00' },
+  { id: 1, name: 'Main Lecture Hall', type: 'HALL', location: 'Block A', totalSeats: 120, availableTime: '08:00-17:00', facilityType: 'lectureHall', status: 'AVAILABLE' },
+  { id: 2, name: 'Computer Lab 01', type: 'LAB', location: 'Block B', capacity: 40, availableTime: '08:00-18:00', facilityType: 'lab', status: 'AVAILABLE' },
+  { id: 3, name: 'Conference Room', type: 'CONFERENCE', location: 'Admin Building', capacity: 20, availableTime: '09:00-16:00', facilityType: 'conferenceRoom', status: 'AVAILABLE' },
 ];
 
 const LIVE_FACILITY_RETRY_AFTER_MS = 5 * 60 * 1000;

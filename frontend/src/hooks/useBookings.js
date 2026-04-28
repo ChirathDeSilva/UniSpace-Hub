@@ -108,8 +108,7 @@ export function useBookings() {
     } else {
       load(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname]);
+  }, [load, location.pathname]);
 
   return {
     bookings,
