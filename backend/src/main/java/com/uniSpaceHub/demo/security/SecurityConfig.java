@@ -52,6 +52,7 @@ public class SecurityConfig {
                 // Facility CRUD is used directly by the public facility pages.
                 .requestMatchers("/api/facilities/**").permitAll()
                 // All other endpoints require a valid JWT (enforced elsewhere)
+                .requestMatchers("/api/bookings/**").permitAll()
                 .anyRequest().authenticated()
             )
 
