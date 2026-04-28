@@ -1,0 +1,40 @@
+.booking-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.booking-status-badge svg {
+  font-size: 12px;
+}
+
+.booking-status-approved {
+  background: #ecfdf5;
+  color: #047857;
+  border-color: #a7f3d0;
+}
+
+.booking-status-rejected {
+  background: #fff1f2;
+  color: #be123c;
+  border-color: #fecdd3;
+}
+
+.booking-status-cancelled {
+  background: #f3f4f6;
+  color: #374151;
+  border-color: #d1d5db;
+}
+
+.booking-status-pending {
+  background: #fffbeb;
+  color: #b45309;
+  border-color: #fde68a;
+}
