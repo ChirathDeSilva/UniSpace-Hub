@@ -2,9 +2,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { bookingCache } from '../utils/bookingCache';
 import {
-  fetchAdminBookings,
   fetchAllResources,
 } from '../services/bookingService';
+import httpClient from '../api/httpClient';
 
 const DEMO_BOOKINGS_CACHE_KEY = 'ush_demo_bookings_cache';
 
@@ -65,10 +65,29 @@ export function useBookings() {
     setError('');
 
     try {
+      // Use DEMO_USER_ID consistent with student booking flow
+      // NOTE: Backend falls back to first available user if requested userId doesn't exist
+      // User 1 doesn't exist, so bookings are saved to user 2
+      const DEMO_USER_ID = 2;
+      
+      console.log('[useBookings] Starting load for userId:', DEMO_USER_ID);
+      
       const [bookingsResult, resourcesResult] = await Promise.all([
-        fetchAdminBookings(),
+        // Use public endpoint: GET /api/bookings?userId={userId}
+        httpClient.get(`/api/bookings?userId=${DEMO_USER_ID}`)
+          .then(response => {
+            console.log('[useBookings] API response:', response.data);
+            return { data: response.data };
+          })
+          .catch(err => {
+            const errorMsg = err?.response?.data?.message || err?.message || 'Failed to fetch bookings';
+            console.error('[useBookings] API error:', errorMsg);
+            return { data: null, error: errorMsg };
+          }),
         fetchAllResources(),
       ]);
+
+      console.log('[useBookings] bookingsResult:', bookingsResult);
 
       if (bookingsResult?.error) {
         const cachedBookings = readBookingsCache();
@@ -83,6 +102,7 @@ export function useBookings() {
           ? bookingsResult.data.map(normalizeBooking)
           : [];
 
+        console.log('[useBookings] Normalized bookings:', bookingsData);
         setBookings(bookingsData);
         writeBookingsCache(bookingsData);
       }

@@ -52,8 +52,11 @@ export const createBooking = async (payload) => {
     return { data: response.data };
   } catch (error) {
     console.error('Error creating booking:', error);
+    const status = error?.response?.status;
+    const body = error?.response?.data;
     const errorMsg = getErrorMessage(error, 'Failed to create booking');
-    return { data: null, error: errorMsg };
+    console.error('Booking error details - Status:', status, 'Body:', body);
+    return { data: null, error: errorMsg, status, errorDetails: body };
   }
 };
 

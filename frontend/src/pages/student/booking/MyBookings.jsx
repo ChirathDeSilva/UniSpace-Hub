@@ -45,92 +45,96 @@ export default function MyBookings() {
   }, [bookings, resourcesMap, searchTerm, statusFilter]);
 
   return (
-    <div className="my-bookings-page">
-      <div className="my-bookings-card">
-        <div className="my-bookings-header">
-          <div>
-            <p className="my-bookings-kicker">Student Booking Center</p>
-            <h1>My Bookings</h1>
-          </div>
-
-          <div className="my-bookings-actions">
-            <Link to="/student/booking" className="my-bookings-link">Back</Link>
-            <Link to="/student/booking/new" className="my-bookings-link my-bookings-link-primary">New Booking</Link>
-          </div>
+    <section className="stack reveal" aria-labelledby="my-bookings-title">
+      <div className="card stack" style={{ gap: '0.35rem' }}>
+        <h1 id="my-bookings-title">My Bookings</h1>
+        <p>View and manage all your facility reservations.</p>
+        <div className="my-bookings-actions">
+          <Link to="/student/booking" className="btn btn-secondary">← Back</Link>
+          <Link to="/student/booking/new" className="btn btn-primary">+ New Booking</Link>
         </div>
-
-        <div className="my-bookings-controls">
-          <input
-            type="text"
-            placeholder="Search by reg number or facility"
-            value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="my-bookings-input"
-          />
-
-          <div className="my-bookings-filters">
-            {['ALL', 'PENDING', 'APPROVED', 'REJECTED', 'CANCELLED'].map((status) => (
-              <button
-                key={status}
-                type="button"
-                className={`my-bookings-filter${statusFilter === status ? ' active' : ''}`}
-                onClick={() => {
-                  setStatusFilter(status);
-                  setCurrentPage(1);
-                }}
-              >
-                {status}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {error && (
-          <div className="my-bookings-message my-bookings-message-error">
-            <p>{error}</p>
-            <button type="button" onClick={refresh}>Retry</button>
-          </div>
-        )}
-
-        {isLoading && (
-          <div className="my-bookings-grid">
-            {[1, 2, 3].map((i) => <SkeletonCard key={i} />)}
-          </div>
-        )}
-
-        {!isLoading && bookings.length === 0 && (
-          <div className="my-bookings-message">
-            <p>No bookings found.</p>
-          </div>
-        )}
-
-        {!isLoading && filteredBookings.length > 0 && (
-          <div className="my-bookings-results">
-            <div className="my-bookings-grid">
-              {filteredBookings
-                .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
-                .map((booking) => (
-                  <BookingCard
-                    key={booking.bookingCode}
-                    booking={booking}
-                    resourcesMap={resourcesMap}
-                    isNew={booking.bookingCode === newBookingCode}
-                  />
-                ))}
-            </div>
-
-            <Pagination
-              total={filteredBookings.length}
-              pageSize={ITEMS_PER_PAGE}
-              current={currentPage}
-              onChange={setCurrentPage}
-            />
-          </div>
-        )}
       </div>
-    </div>
+
+      <div className="card" aria-label="Booking filters">
+        <div className="my-bookings-controls">
+          <label className="my-bookings-filter-field" htmlFor="booking-search">
+            Search
+            <input
+              id="booking-search"
+              type="search"
+              placeholder="Search by booking code, facility, or reg number"
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="my-bookings-input"
+            />
+          </label>
+
+          <div className="my-bookings-filter-status">
+            <span className="my-bookings-filter-label">Status</span>
+            <div className="my-bookings-filters">
+              {['ALL', 'PENDING', 'APPROVED', 'REJECTED', 'CANCELLED'].map((status) => (
+                <button
+                  key={status}
+                  type="button"
+                  className={`btn btn-secondary ${statusFilter === status ? 'active' : ''}`}
+                  onClick={() => {
+                    setStatusFilter(status);
+                    setCurrentPage(1);
+                  }}
+                >
+                  {status}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {error && (
+        <div className="card my-bookings-message my-bookings-message-error">
+          <p>{error}</p>
+          <button type="button" className="btn btn-primary" onClick={refresh}>Retry</button>
+        </div>
+      )}
+
+      {isLoading && (
+        <div className="my-bookings-grid">
+          {[1, 2, 3].map((i) => <SkeletonCard key={i} />)}
+        </div>
+      )}
+
+      {!isLoading && bookings.length === 0 && (
+        <div className="card my-bookings-message">
+          <p>No bookings found.</p>
+        </div>
+      )}
+
+      {!isLoading && filteredBookings.length > 0 && (
+        <div>
+          <div className="my-bookings-grid">
+            {filteredBookings
+              .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
+              .map((booking) => (
+                <BookingCard
+                  key={booking.bookingCode}
+                  booking={booking}
+                  resourcesMap={resourcesMap}
+                  isNew={booking.bookingCode === newBookingCode}
+                />
+              ))}
+          </div>
+
+          <Pagination
+            total={filteredBookings.length}
+            pageSize={ITEMS_PER_PAGE}
+            current={currentPage}
+            onChange={setCurrentPage}
+          />
+        </div>
+      )}
+    </section>
   );
 }

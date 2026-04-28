@@ -3,11 +3,14 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { FaArrowLeft, FaCalendarAlt, FaCheck, FaClock, FaDoorOpen, FaExclamationTriangle, FaHistory, FaIdCard, FaInfoCircle, FaMapMarkerAlt, FaShieldAlt, FaUsers, FaUserGraduate } from 'react-icons/fa';
 import DashboardLayout from '../../../components/layouts/DashboardLayout';
 import Toast from '../../../components/booking/Toast';
-import { fetchAllResources, createBooking, fetchAdminBookings } from '../../../services/bookingService';
+import httpClient from '../../../api/httpClient';
+import { fetchAllResources, createBooking } from '../../../services/bookingService';
 import { bookingCache } from '../../../utils/bookingCache';
 import './CreateBooking.css';
 
-const DEMO_USER_ID = 1;
+// NOTE: Backend falls back to first available user if requested userId doesn't exist
+// User 1 doesn't exist in database, so bookings are saved to user 2
+const DEMO_USER_ID = 2;
 
 // Fallback demo facilities - only used when API is unavailable
 // These match the inherited facility table structure
@@ -169,10 +172,11 @@ export default function CreateBooking() {
   useEffect(() => {
     if (!formData.facilityId) return;
 
-    fetchAdminBookings()
-      .then(({ data }) => {
-        if (data && Array.isArray(data)) {
-          const facilityOnly = data.filter((b) => String(b.facilityId) === String(formData.facilityId));
+    // Fetch user bookings from public endpoint (no auth required)
+    httpClient.get(`/api/bookings?userId=${DEMO_USER_ID}`)
+      .then((response) => {
+        if (response.data && Array.isArray(response.data)) {
+          const facilityOnly = response.data.filter((b) => String(b.facilityId) === String(formData.facilityId));
           setExistingBookings(facilityOnly);
         }
       })
@@ -257,9 +261,12 @@ export default function CreateBooking() {
       userId: DEMO_USER_ID,
     };
 
-    const { data: newBooking, error: bookingErr } = await createBooking(finalPayload);
+    const { data: newBooking, error: bookingErr, status, errorDetails } = await createBooking(finalPayload);
     if (bookingErr) {
-      setFormError(bookingErr);
+      console.error('Booking submission failed - Status:', status, 'Error:', bookingErr, 'Details:', errorDetails);
+      const detailMsg = errorDetails?.message || errorDetails?.error || '';
+      const fullError = status ? `Error ${status}: ${bookingErr}${detailMsg ? ' - ' + detailMsg : ''}` : bookingErr;
+      setFormError(fullError);
       setIsSubmitting(false);
       return;
     }
