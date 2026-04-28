@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
-import httpClient from '../../api/httpClient'
-import { getProfile } from '../../services/authService'
-import InputField from '../../components/ui/InputField'
-import Button from '../../components/ui/Button'
-import Spinner from '../../components/ui/Spinner'
+import httpClient from '../../../api/httpClient'
+import { getProfile } from '../../../services/authService'
+import InputField from '../../../components/ui/InputField'
+import Button from '../../../components/ui/Button'
+import Spinner from '../../../components/ui/Spinner'
 import './BookingPage.css'
 
 export default function BookingPage() {
