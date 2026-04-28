@@ -95,7 +95,7 @@ public class SecurityConfig {
      * Used by AuthController to verify hashed passwords for Admin and Technician logins.
      * Strength factor 12 is a good balance of security vs. performance.
      */
-    @Bean
+   /* @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of(
@@ -110,7 +110,7 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/api/facilities/**", configuration);
         return source;
-    }
+    }*/
 
     @Bean
     public PasswordEncoder passwordEncoder() {
