@@ -3,7 +3,7 @@ import { NavLink, Outlet } from 'react-router-dom'
 const primaryNavItems = [
   { to: '/', label: 'Home' },
   { to: '/facility-portal', label: 'Facility Portal' },
-  { to: '/ticketing', label: 'Ticketing' },
+  { to: '/user/tickets', label: 'Tickets' },
   { to: '/booking', label: 'Facility Booking' },
   { to: '/contact-us', label: 'Contact Us' },
   { to: '/about-us', label: 'About Us' },

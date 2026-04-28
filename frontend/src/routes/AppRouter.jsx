@@ -74,4 +74,4 @@ export default function AppRouter() {
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
   )
-}
+}
