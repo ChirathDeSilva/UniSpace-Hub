@@ -42,4 +42,9 @@ public class JwtTokenProvider {
                 .signWith(signingKey)
                 .compact();
     }
+
+    public io.jsonwebtoken.Claims getClaimsFromToken(String token) {
+        SecretKey signingKey = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+        return Jwts.parser().verifyWith(signingKey).build().parseSignedClaims(token).getPayload();
+    }
 }

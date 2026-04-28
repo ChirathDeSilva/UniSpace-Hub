@@ -18,6 +18,12 @@ public interface NotificationService {
 
     List<NotificationDto> getUserNotifications(Long userId);
 
+    List<NotificationDto> getUnreadUserNotifications(Long userId);
+
+    long getUnreadCount(Long userId);
+
+    void markAllAsRead(Long userId);
+
     void markAsRead(Long notificationId);
     
     void sendLoginAlert(User user);

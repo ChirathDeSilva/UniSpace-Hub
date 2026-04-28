@@ -69,6 +69,9 @@ public class AuthController {
     @Autowired
     private NotificationService notificationService;
 
+    @Autowired
+    private com.uniSpaceHub.demo.repository.audit.LoginAuditRepository loginAuditRepository;
+
     private final RestTemplate restTemplate = new RestTemplate();
 
     // =========================================================================
@@ -162,6 +165,7 @@ public class AuthController {
 
             userRepository.save(user);
             notificationService.sendLoginAlert(user);
+            loginAuditRepository.save(new com.uniSpaceHub.demo.model.audit.LoginAudit(user, LocalDateTime.now(), "GOOGLE"));
 
             // 5. Generate JWT and redirect to frontend
             String jwtToken = jwtTokenProvider.generateToken(user);
@@ -275,6 +279,7 @@ public class AuthController {
 
             userRepository.save(user);
             notificationService.sendLoginAlert(user);
+            loginAuditRepository.save(new com.uniSpaceHub.demo.model.audit.LoginAudit(user, LocalDateTime.now(), "MICROSOFT"));
 
             // 5. Generate JWT and redirect to frontend
             String jwtToken = jwtTokenProvider.generateToken(user);
@@ -314,6 +319,7 @@ public class AuthController {
             user.setLastLogin(LocalDateTime.now());
             userRepository.save(user);
             notificationService.sendLoginAlert(user);
+            loginAuditRepository.save(new com.uniSpaceHub.demo.model.audit.LoginAudit(user, LocalDateTime.now(), "ADMIN_CREDENTIALS"));
 
             String jwtToken = jwtTokenProvider.generateToken(user);
 
@@ -354,6 +360,7 @@ public class AuthController {
             user.setLastLogin(LocalDateTime.now());
             userRepository.save(user);
             notificationService.sendLoginAlert(user);
+            loginAuditRepository.save(new com.uniSpaceHub.demo.model.audit.LoginAudit(user, LocalDateTime.now(), "TECHNICIAN_CREDENTIALS"));
 
             String jwtToken = jwtTokenProvider.generateToken(user);
 
@@ -369,5 +376,11 @@ public class AuthController {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred during login");
         }
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout() {
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
+        return ResponseEntity.ok("Logged out successfully");
     }
 }
