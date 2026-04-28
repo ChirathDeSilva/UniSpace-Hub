@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import useAuth from '../../hooks/useAuth'
 
 export default function AuthCallbackPage() {
@@ -13,11 +13,11 @@ export default function AuthCallbackPage() {
 
     if (token) {
       signIn({ accessToken: token })
-      navigate('/dashboard', { replace: true })
+      navigate('/home', { replace: true })
     } else if (error) {
-      navigate('/login?error=access_denied', { replace: true })
+      navigate('/?error=access_denied', { replace: true })
     } else {
-      navigate('/login', { replace: true })
+      navigate('/', { replace: true })
     }
   }, [searchParams, navigate, signIn])
 

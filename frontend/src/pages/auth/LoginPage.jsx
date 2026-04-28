@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { Navigate, useNavigate, useLocation } from 'react-router-dom'
 import Button from '../../components/ui/Button'
 import { login } from '../../services/authService'
 import useAuth from '../../hooks/useAuth'
@@ -12,9 +12,14 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const navigate = useNavigate()
   const location = useLocation()
-  const { signIn } = useAuth()
+  const { signIn, isAuthenticated } = useAuth()
 
-  const from = location.state?.from || '/dashboard'
+  // If already logged in, skip the login page entirely
+  if (isAuthenticated) {
+    return <Navigate to="/home" replace />
+  }
+
+  const from = location.state?.from || '/home'
 
   const handleLocalLogin = async (e) => {
     e.preventDefault()
@@ -31,7 +36,7 @@ export default function LoginPage() {
           if (userRole === 'ROLE_ADMIN') {
             navigate('/admin', { replace: true })
           } else {
-            navigate(from === '/dashboard' || from === '/' ? '/dashboard' : from, { replace: true })
+            navigate(from === '/' ? '/home' : from, { replace: true })
           }
         } catch {
           navigate(from, { replace: true })
@@ -106,9 +111,6 @@ export default function LoginPage() {
         </Button>
       </div>
 
-      <div style={{ textAlign: 'center', marginTop: 'var(--space-4)' }}>
-        <Link to="/" style={{ fontSize: '0.875rem' }}>Back to Home</Link>
-      </div>
     </section>
   )
 }
