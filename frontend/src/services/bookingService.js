@@ -33,7 +33,7 @@ export const fetchAllResources = async () => {
  */
 export const fetchUserProfile = async () => {
   try {
-    const response = await httpClient.get('/api/users/me');
+    const response = await httpClient.get('/api/user/me');
     return { data: response.data };
   } catch (error) {
     console.error('Error fetching user profile:', error);
@@ -155,9 +155,11 @@ export const getAdminIdFromToken = () => {
  * Fetch user's own bookings
  * @returns {Promise} Array of user bookings
  */
-export const fetchUserBookings = async () => {
+export const fetchUserBookings = async (userId) => {
   try {
-    const response = await httpClient.get('/api/bookings/user');
+    const response = await httpClient.get('/api/bookings', {
+      params: { userId },
+    });
     return { data: response.data };
   } catch (error) {
     console.error('Error fetching user bookings:', error);

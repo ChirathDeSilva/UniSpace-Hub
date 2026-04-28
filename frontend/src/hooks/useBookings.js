@@ -2,9 +2,10 @@ import { useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { bookingCache } from '../utils/bookingCache';
 import {
-  fetchAdminBookings,
   fetchAllResources,
+  fetchUserBookings,
 } from '../services/bookingService';
+import { getAccessToken } from '../services/authStorage';
 
 const DEMO_BOOKINGS_CACHE_KEY = 'ush_demo_bookings_cache';
 
@@ -36,6 +37,27 @@ const normalizeBooking = (booking) => {
   };
 };
 
+const getUserIdFromToken = () => {
+  try {
+    const token = getAccessToken();
+    if (!token) return null;
+
+    const payloadPart = token.split('.')[1];
+    if (!payloadPart) return null;
+
+    const normalized = payloadPart.replace(/-/g, '+').replace(/_/g, '/');
+    const decoded = atob(normalized);
+    const payload = JSON.parse(decoded);
+    const rawUserId = payload.userId ?? payload.id ?? payload.uid ?? payload.sub ?? null;
+    if (rawUserId == null) return null;
+
+    const parsed = Number(rawUserId);
+    return Number.isFinite(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+};
+
 const toResourcesMap = (resources) => {
   const map = {};
   resources.forEach((resource) => {
@@ -65,8 +87,9 @@ export function useBookings() {
     setError('');
 
     try {
+      const userId = getUserIdFromToken();
       const [bookingsResult, resourcesResult] = await Promise.all([
-        fetchAdminBookings(),
+        userId ? fetchUserBookings(userId) : Promise.resolve({ data: [], error: 'Missing user id' }),
         fetchAllResources(),
       ]);
 

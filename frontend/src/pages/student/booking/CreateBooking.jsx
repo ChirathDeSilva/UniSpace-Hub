@@ -1,24 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { FaArrowLeft, FaCalendarAlt, FaCheck, FaClock, FaDoorOpen, FaExclamationTriangle, FaHistory, FaIdCard, FaInfoCircle, FaMapMarkerAlt, FaShieldAlt, FaUsers, FaUserGraduate } from 'react-icons/fa';
 import DashboardLayout from '../../../components/layouts/DashboardLayout';
 import Toast from '../../../components/booking/Toast';
-import { fetchAllResources, createBooking, fetchAdminBookings } from '../../../services/bookingService';
+import { createBooking, getAdminIdFromToken } from '../../../services/bookingService';
+import { getFacilities, subscribeFacilities } from '../../../services/facilityStorage';
 import { bookingCache } from '../../../utils/bookingCache';
 import './CreateBooking.css';
 
-const DEMO_USER_ID = 1;
-
-// Fallback demo facilities - only used when API is unavailable
-// These match the inherited facility table structure
-const DEMO_FACILITIES = [
-  { id: 1, name: 'Main Lecture Hall', type: 'HALL', location: 'Block A', totalSeats: 120, availableTime: '08:00-17:00', facilityType: 'lectureHall', status: 'AVAILABLE' },
-  { id: 2, name: 'Computer Lab 01', type: 'LAB', location: 'Block B', capacity: 40, availableTime: '08:00-18:00', facilityType: 'lab', status: 'AVAILABLE' },
-  { id: 3, name: 'Conference Room', type: 'CONFERENCE', location: 'Admin Building', capacity: 20, availableTime: '09:00-16:00', facilityType: 'conferenceRoom', status: 'AVAILABLE' },
-];
-
-const LIVE_FACILITY_RETRY_AFTER_MS = 5 * 60 * 1000;
-const LIVE_FACILITY_COOLDOWN_KEY = 'ush_live_facilities_retry_after';
 
 const INITIAL_FORM = {
   facilityId: '',
@@ -31,39 +20,37 @@ const INITIAL_FORM = {
   studentRegNumber: '',
 };
 
-const shouldSkipLiveFacilities = () => {
-  const retryAt = Number(sessionStorage.getItem(LIVE_FACILITY_COOLDOWN_KEY) || 0);
-  return Number.isFinite(retryAt) && Date.now() < retryAt;
-};
-
-const markLiveFacilitiesFailure = () => {
-  sessionStorage.setItem(LIVE_FACILITY_COOLDOWN_KEY, String(Date.now() + LIVE_FACILITY_RETRY_AFTER_MS));
-};
-
-const clearLiveFacilitiesFailure = () => {
-  sessionStorage.removeItem(LIVE_FACILITY_COOLDOWN_KEY);
-};
-
 export default function CreateBooking() {
+  const location = useLocation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const urlFacilityId = searchParams.get('facilityId');
+  const urlFacilityId = location.state?.facilityId || searchParams.get('facilityId');
   const errorTopRef = useRef(null);
 
   const [formData, setFormData] = useState({ ...INITIAL_FORM, facilityId: urlFacilityId || '' });
-  const [resources, setResources] = useState([]);
-  const [selectedResource, setSelectedResource] = useState(null);
-  const [isResourceLocked, setIsResourceLocked] = useState(!!urlFacilityId);
+  const [facilities, setFacilities] = useState([]);
+  const [selectedFacility, setSelectedFacility] = useState(null);
+  const [isFacilityLocked, setIsFacilityLocked] = useState(!!urlFacilityId);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [formError, setFormError] = useState('');
   const [toast, setToast] = useState(null);
-  const [existingBookings, setExistingBookings] = useState([]);
 
   const timeToMinutes = (timeStr) => {
     if (!timeStr) return 0;
     const [hh, mm] = timeStr.split(':').map(Number);
     return (hh * 60) + mm;
+  };
+
+  const getFacilityAvailableTime = (facility) => facility?.details?.availableTime || facility?.availableTime || '00:00-23:59';
+
+  const getFacilityImageSrc = (facility) => {
+    const imageUrl = facility?.imageUrl || facility?.imageName || '';
+    if (!imageUrl) return '';
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://') || imageUrl.startsWith('/')) {
+      return imageUrl;
+    }
+    return `http://localhost:8082/uploads/${imageUrl}`;
   };
 
   const isNameInvalid = formData.studentName.length > 0 && /[^A-Za-z\s.]/.test(formData.studentName);
@@ -78,15 +65,16 @@ export default function CreateBooking() {
   const isTimeInvalid = formData.startTime && formData.endTime && formData.endTime <= formData.startTime;
 
   const isOutsideOperationalWindow = () => {
-    if (!selectedResource || !formData.startTime || !formData.endTime) return false;
+    if (!selectedFacility || !formData.startTime || !formData.endTime) return false;
 
     const start = timeToMinutes(formData.startTime);
     const end = timeToMinutes(formData.endTime);
 
     let open = 0;
     let close = 1439;
-    if (selectedResource.availableTime) {
-      const parts = selectedResource.availableTime.split('-');
+    const availableTime = getFacilityAvailableTime(selectedFacility);
+    if (availableTime) {
+      const parts = availableTime.split('-');
       if (parts.length === 2) {
         open = timeToMinutes(parts[0].trim());
         close = timeToMinutes(parts[1].trim());
@@ -97,102 +85,49 @@ export default function CreateBooking() {
   };
 
   const isCapacityOverflow = () => {
-    if (!selectedResource || !formData.expectedAttendees) return false;
-    const capacity = selectedResource.totalSeats || selectedResource.capacity || 0;
+    if (!selectedFacility || !formData.expectedAttendees) return false;
+    const capacity = selectedFacility.capacity || 0;
     return parseInt(formData.expectedAttendees, 10) > capacity;
   };
 
-  const isTimeConflict = () => {
-    if (!formData.bookingDate || !formData.startTime || !formData.endTime || existingBookings.length === 0) return false;
-
-    const start = timeToMinutes(formData.startTime);
-    const end = timeToMinutes(formData.endTime);
-
-    return existingBookings.some((b) => {
-      if (b.bookingDate !== formData.bookingDate) return false;
-      if (b.status === 'REJECTED' || b.status === 'CANCELLED') return false;
-      const bStart = timeToMinutes(b.startTime);
-      const bEnd = timeToMinutes(b.endTime);
-      return start < bEnd && end > bStart;
-    });
-  };
-
   useEffect(() => {
-    if (formData.facilityId && resources.length > 0) {
-      const resource = resources.find((r) => String(r.id) === String(formData.facilityId));
-      setSelectedResource(resource || null);
+    if (formData.facilityId && facilities.length > 0) {
+      const facility = facilities.find((item) => String(item.id) === String(formData.facilityId));
+      setSelectedFacility(facility || null);
     } else {
-      setSelectedResource(null);
+      setSelectedFacility(null);
     }
-  }, [formData.facilityId, resources]);
+  }, [formData.facilityId, facilities]);
 
   useEffect(() => {
-    const cached = bookingCache.getResources();
-    if (cached && cached.length > 0) {
-      setResources(cached);
-    }
+    const syncFacilities = async () => {
+      try {
+        const cached = bookingCache.getResources();
+        if (cached && cached.length > 0) {
+          setFacilities(cached);
+        }
 
-    if (shouldSkipLiveFacilities()) {
-      if (!cached || cached.length === 0) {
-        setResources(DEMO_FACILITIES);
-        setFormError('Live facilities are temporarily unavailable. Demo facilities are loaded.');
+        const liveFacilities = await getFacilities();
+        if (liveFacilities.length > 0) {
+          setFacilities(liveFacilities);
+          bookingCache.setResources(liveFacilities);
+          setFormError('');
+        } else if (!cached || cached.length === 0) {
+          setFacilities([]);
+          setFormError('No facilities were returned from the facility table.');
+        }
+      } catch (error) {
+        if (!bookingCache.getResources()) {
+          setFacilities([]);
+        }
+        setFormError(`Failed to load facilities from the facility table: ${error?.message || 'Unknown error'}`);
       }
-      return;
-    }
+    };
 
-    fetchAllResources()
-      .then(({ data, error }) => {
-        if (data) {
-          const resourceList = Array.isArray(data) ? data : (data.data || data.facilities || []);
-          if (resourceList.length > 0) {
-            clearLiveFacilitiesFailure();
-            setResources(resourceList);
-            bookingCache.setResources(resourceList);
-          } else {
-            markLiveFacilitiesFailure();
-            setResources(DEMO_FACILITIES);
-            setFormError('Live facilities are unavailable right now. Demo facilities are loaded.');
-          }
-        } else if (error) {
-          markLiveFacilitiesFailure();
-          setResources(DEMO_FACILITIES);
-          setFormError(`Failed to load live facilities: ${error}. Demo facilities are loaded.`);
-        }
-      })
-      .catch(() => {
-        markLiveFacilitiesFailure();
-        setResources(DEMO_FACILITIES);
-        setFormError('Failed to load live facilities. Demo facilities are loaded.');
-      });
+    syncFacilities();
+    const unsubscribe = subscribeFacilities(syncFacilities);
+    return unsubscribe;
   }, []);
-
-  useEffect(() => {
-    if (!formData.facilityId) return;
-
-    fetchAdminBookings()
-      .then(({ data }) => {
-        if (data && Array.isArray(data)) {
-          const facilityOnly = data.filter((b) => String(b.facilityId) === String(formData.facilityId));
-          setExistingBookings(facilityOnly);
-        }
-      })
-      .catch(() => {
-        setExistingBookings([]);
-      });
-  }, [formData.facilityId]);
-
-  useEffect(() => {
-    if (urlFacilityId) {
-      setFormData((prev) => ({ ...prev, facilityId: urlFacilityId }));
-      setIsResourceLocked(true);
-    }
-  }, [urlFacilityId]);
-
-  useEffect(() => {
-    if (formError) {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  }, [formError]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -226,14 +161,13 @@ export default function CreateBooking() {
     if (!formData.facilityId) return 'Please select a campus facility.';
     if (!formData.bookingDate) return 'Reservation date is required.';
     if (isCapacityOverflow()) {
-      const capacity = selectedResource?.totalSeats || selectedResource?.capacity || 0;
+      const capacity = selectedFacility?.capacity || 0;
       return `Capacity overflow. This venue only accommodates ${capacity} people.`;
     }
     if (!formData.startTime || !formData.endTime) return 'Start and End times are mandatory.';
     if (isTimeInvalid) return 'Operational time conflict detected. Start time must be before end time.';
-    if (isTimeConflict()) return 'Time conflict detected. This facility is already reserved during this period.';
     if (isOutsideOperationalWindow()) {
-      const timeRange = selectedResource?.availableTime || '00:00-23:59';
+      const timeRange = getFacilityAvailableTime(selectedFacility);
       return `Operational window mismatch. This facility is only available between ${timeRange}.`;
     }
     if (!formData.purpose || formData.purpose.length < 5) return 'Statement of purpose is mandatory (min 5 chars).';
@@ -251,10 +185,17 @@ export default function CreateBooking() {
     }
 
     setIsSubmitting(true);
+    const userId = getAdminIdFromToken();
+    if (!userId || userId === 'SYSTEM') {
+      setFormError('Unable to determine authenticated user. Please sign in and try again.');
+      setIsSubmitting(false);
+      return;
+    }
+
     const finalPayload = {
       ...formData,
       expectedAttendees: parseInt(formData.expectedAttendees, 10),
-      userId: DEMO_USER_ID,
+      userId: String(userId),
     };
 
     const { data: newBooking, error: bookingErr } = await createBooking(finalPayload);
@@ -279,22 +220,22 @@ export default function CreateBooking() {
         <div className="cb-layout">
           <aside className="cb-sidebar">
             <FaShieldAlt className="cb-sidebar-icon" />
-            {selectedResource ? (
+            {selectedFacility ? (
               <>
                 <div className="cb-preview-box">
-                  {selectedResource.imageName ? (
-                    <img src={`http://localhost:8082/uploads/${selectedResource.imageName}`} alt={selectedResource.name} />
+                  {getFacilityImageSrc(selectedFacility) ? (
+                    <img src={getFacilityImageSrc(selectedFacility)} alt={selectedFacility.name} />
                   ) : (
                     <div className="cb-preview-empty"><FaMapMarkerAlt /></div>
                   )}
                 </div>
-                <h2>{selectedResource.name}</h2>
+                <h2>{selectedFacility.name}</h2>
                 <p className="cb-muted">Selected facility</p>
                 <div className="cb-info-list">
-                  <div><FaDoorOpen /> <span>{selectedResource.type || 'General'}</span></div>
-                  <div><FaMapMarkerAlt /> <span>{selectedResource.location || 'N/A'}</span></div>
-                  <div><FaUsers /> <span>{selectedResource.totalSeats || selectedResource.capacity || 'N/A'} people</span></div>
-                  <div><FaClock /> <span>{selectedResource.availableTime || '00:00-23:59'}</span></div>
+                  <div><FaDoorOpen /> <span>{selectedFacility.type || 'General'}</span></div>
+                  <div><FaMapMarkerAlt /> <span>{selectedFacility.location || 'N/A'}</span></div>
+                  <div><FaUsers /> <span>{selectedFacility.capacity || 'N/A'} people</span></div>
+                  <div><FaClock /> <span>{getFacilityAvailableTime(selectedFacility)}</span></div>
                 </div>
               </>
             ) : (
@@ -339,12 +280,12 @@ export default function CreateBooking() {
                 <div className="cb-grid-two">
                   <label className="cb-field">
                     <span><FaMapMarkerAlt /> Select Facility</span>
-                    {isResourceLocked ? (
-                      <div className="cb-locked-box">{selectedResource?.name || 'Loading facility...'}</div>
+                    {isFacilityLocked ? (
+                      <div className="cb-locked-box">{selectedFacility?.name || 'Loading facility...'}</div>
                     ) : (
                       <select name="facilityId" value={formData.facilityId} onChange={handleChange} className="cb-select">
                         <option value="">Select a facility</option>
-                        {resources.map((res) => <option key={res.id} value={res.id}>{res.name}</option>)}
+                        {facilities.map((facility) => <option key={facility.id} value={facility.id}>{facility.name}</option>)}
                       </select>
                     )}
                   </label>
