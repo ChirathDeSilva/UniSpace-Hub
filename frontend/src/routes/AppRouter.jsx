@@ -27,10 +27,12 @@ import UnauthorizedPage from '../pages/common/UnauthorizedPage'
 export default function AppRouter() {
   return (
     <Routes>
+      {/* OAuth2 callback — MUST be outside any layout to avoid chrome flash before redirect */}
+      <Route path="/oauth2/redirect" element={<AuthCallbackPage />} />
+
       <Route element={<PublicLayout />}>
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/oauth2/redirect" element={<AuthCallbackPage />} />
         <Route path="/facility-portal" element={<FacilityPortalPage />} />
         <Route path="/ticketing" element={<TicketingPage />} />
         <Route path="/booking" element={<BookingPage />} />

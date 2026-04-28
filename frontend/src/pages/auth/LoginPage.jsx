@@ -24,10 +24,22 @@ export default function LoginPage() {
       const response = await login({ email, password }, role)
       if (response && response.jwtToken) {
         signIn({ accessToken: response.jwtToken })
-        navigate(from, { replace: true })
+        // Decode role from JWT payload to choose the correct landing page
+        try {
+          const payload = JSON.parse(atob(response.jwtToken.split('.')[1]))
+          const userRole = payload.role || ''
+          if (userRole === 'ROLE_ADMIN') {
+            navigate('/admin', { replace: true })
+          } else {
+            navigate(from === '/dashboard' || from === '/' ? '/dashboard' : from, { replace: true })
+          }
+        } catch {
+          navigate(from, { replace: true })
+        }
       }
     } catch (err) {
-      setError(err.response?.data || 'Login failed. Please check your credentials.')
+      const errData = err.response?.data
+      setError(typeof errData === 'string' ? errData : 'Login failed. Please check your credentials.')
     } finally {
       setIsLoading(false)
     }
