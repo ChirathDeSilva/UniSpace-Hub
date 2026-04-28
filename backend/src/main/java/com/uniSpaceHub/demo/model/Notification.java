@@ -18,7 +18,15 @@ public class Notification {
     @Column(nullable = false)
     private String message;
 
-    private String type; // e.g., "BOOKING_APPROVED", "TICKET_RESOLVED"
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private NotificationType type;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private NotificationSeverity severity;
+
+    private String referenceId;
 
     private boolean isRead = false;
 
@@ -39,8 +47,14 @@ public class Notification {
     public String getMessage() { return message; }
     public void setMessage(String message) { this.message = message; }
 
-    public String getType() { return type; }
-    public void setType(String type) { this.type = type; }
+    public NotificationType getType() { return type; }
+    public void setType(NotificationType type) { this.type = type; }
+
+    public NotificationSeverity getSeverity() { return severity; }
+    public void setSeverity(NotificationSeverity severity) { this.severity = severity; }
+
+    public String getReferenceId() { return referenceId; }
+    public void setReferenceId(String referenceId) { this.referenceId = referenceId; }
 
     public boolean isRead() { return isRead; }
     public void setRead(boolean read) { isRead = read; }
