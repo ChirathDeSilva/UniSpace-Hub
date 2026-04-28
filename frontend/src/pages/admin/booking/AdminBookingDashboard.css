@@ -1,55 +1,59 @@
 .adb-page {
   min-height: 100%;
-  background: #0b1220;
-  padding: 24px;
-  color: #e5e7eb;
+  background: #F5F7FA;
+  padding: 28px 20px;
+  color: #0f1724;
+  font-family: 'Poppins', sans-serif;
 }
 
 .adb-container {
-  max-width: 1320px;
+  max-width: 1280px;
   margin: 0 auto;
 }
 
 .adb-header {
-  margin-bottom: 16px;
+  margin-bottom: 18px;
 }
 
 .adb-kicker {
   margin: 0 0 6px;
-  color: #93c5fd;
-  font-size: 11px;
-  font-weight: 800;
+  color: #6B7280;
+  font-size: 12px;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.12em;
 }
 
 .adb-header h1 {
   margin: 0;
-  font-size: 30px;
+  font-size: 28px;
+  color: #1E2A78;
+  font-weight: 800;
 }
 
 .adb-stats {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: 14px;
+  margin-bottom: 18px;
 }
 
 .adb-stat-card {
-  background: #111a2e;
-  border: 1px solid #25304a;
-  border-radius: 10px;
-  padding: 14px;
+  background: #ffffff;
+  border: 1px solid #eef6ff;
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: 0 8px 20px rgba(16,24,64,0.06);
 }
 
 .adb-stat-value {
   font-size: 26px;
   font-weight: 900;
-  color: #f8fafc;
+  color: #0f1724;
 }
 
 .adb-stat-label {
-  color: #9ca3af;
+  color: #6B7280;
   font-size: 12px;
   font-weight: 700;
 }
@@ -72,14 +76,14 @@
 .adb-filter-btn,
 .adb-pagination button,
 .adb-link {
-  border: 1px solid #42547a;
-  background: #1b2a47;
-  color: #fff;
-  border-radius: 6px;
-  padding: 8px 10px;
+  border: 1px solid rgba(30,42,120,0.06);
+  background: #ffffff;
+  color: #1E2A78;
+  border-radius: 10px;
+  padding: 8px 12px;
   text-decoration: none;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
 }
 
@@ -88,9 +92,9 @@
   align-items: center;
   gap: 8px;
   min-width: 280px;
-  background: #0d1425;
-  border: 1px solid #3b4a6b;
-  border-radius: 8px;
+  background: #ffffff;
+  border: 1px solid #eef6ff;
+  border-radius: 12px;
   padding: 8px 10px;
 }
 
@@ -98,7 +102,7 @@
   flex: 1;
   border: 0;
   background: transparent;
-  color: #eef2ff;
+  color: #0f1724;
   outline: none;
 }
 
@@ -106,30 +110,31 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  background: #0d1425;
-  border: 1px solid #25304a;
-  border-radius: 10px;
+  background: #fff7ed;
+  border: 1px solid #fbd5b5;
+  border-radius: 12px;
   padding: 14px;
   margin-bottom: 16px;
 }
 
 .adb-message-error {
-  background: #1f0d14;
-  border-color: #7f1d1d;
-  color: #fecaca;
+  background: #fff7ed;
+  border-color: #fbd5b5;
+  color: #92400e;
 }
 
 .adb-table-wrap {
-  background: #111a2e;
-  border: 1px solid #25304a;
-  border-radius: 10px;
+  background: #ffffff;
+  border: 1px solid #eef6ff;
+  border-radius: 14px;
   padding: 14px;
   overflow: auto;
+  box-shadow: 0 8px 28px rgba(16,24,64,0.04);
 }
 
 .adb-results-summary {
   margin-bottom: 12px;
-  color: #9ca3af;
+  color: #6B7280;
   font-size: 12px;
 }
 
@@ -142,21 +147,21 @@
 .adb-table th,
 .adb-table td {
   padding: 12px 10px;
-  border-bottom: 1px solid #25304a;
+  border-bottom: 1px solid #eef6ff;
   text-align: left;
   vertical-align: middle;
 }
 
 .adb-table th {
-  color: #9ca3af;
-  font-size: 11px;
+  color: #6B7280;
+  font-size: 12px;
   text-transform: uppercase;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.12em;
 }
 
 .adb-empty {
   text-align: center;
-  color: #9ca3af;
+  color: #6B7280;
   padding: 24px 10px;
 }
 
@@ -167,30 +172,30 @@
   min-width: 84px;
   padding: 6px 10px;
   border-radius: 999px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
 .adb-PENDING {
-  background: #3b2f0d;
-  color: #fcd34d;
+  background: rgba(242,140,40,0.08);
+  color: #92400e;
 }
 
 .adb-APPROVED {
-  background: #0d2f22;
-  color: #6ee7b7;
+  background: rgba(16,185,129,0.06);
+  color: #047857;
 }
 
 .adb-REJECTED {
-  background: #33101b;
-  color: #fca5a5;
+  background: rgba(190,18,60,0.06);
+  color: #BE123C;
 }
 
 .adb-CANCELLED {
-  background: #1f2937;
-  color: #d1d5db;
+  background: rgba(99,102,241,0.04);
+  color: #374151;
 }
 
 .adb-link {
@@ -200,7 +205,7 @@
 }
 
 .adb-highlight {
-  background: rgba(37, 99, 235, 0.12);
+  background: rgba(30,42,120,0.06);
 }
 
 .adb-pagination {
@@ -212,7 +217,7 @@
 }
 
 .adb-pagination button:disabled {
-  opacity: 0.45;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 

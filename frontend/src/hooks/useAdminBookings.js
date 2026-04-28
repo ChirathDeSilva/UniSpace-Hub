@@ -7,9 +7,64 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { fetchAdminBookings, fetchAllResources } from '../services/bookingService';
+import { fetchAllResources, fetchUserBookings, getUserIdFromToken } from '../services/bookingService';
+import { bookingCache } from '../utils/bookingCache';
 
 export const BOOKING_STATUSES = ['ALL', 'PENDING', 'APPROVED', 'REJECTED', 'CANCELLED'];
+
+const DEMO_BOOKINGS_CACHE_KEY = 'ush_demo_bookings_cache';
+
+const readBookingsCache = () => {
+    try {
+        const raw = sessionStorage.getItem(DEMO_BOOKINGS_CACHE_KEY);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+    } catch {
+        return [];
+    }
+};
+
+const normalizeBooking = (booking) => {
+    const facilityId = booking?.facilityId ?? booking?.resourceId ?? null;
+    return {
+        ...booking,
+        facilityId,
+        resourceId: facilityId,
+    };
+};
+
+const mergeBookings = (apiList, cachedList) => {
+    const map = {};
+    (apiList || []).forEach((b) => {
+        const code = String(b.bookingCode || b.id || '');
+        if (!code) return;
+        map[code] = b;
+    });
+
+    (cachedList || []).forEach((cb) => {
+        const code = String(cb.bookingCode || cb.id || '');
+        if (!code) return;
+        const existing = map[code];
+        if (!existing) {
+            map[code] = cb;
+            return;
+        }
+
+        const apiUpdated = existing.updatedAt ? Date.parse(existing.updatedAt) : 0;
+        const cachedUpdated = cb.updatedAt ? Date.parse(cb.updatedAt) : 0;
+
+        if (cachedUpdated > apiUpdated) {
+            map[code] = cb;
+        } else if (!existing.updatedAt && cb.updatedAt) {
+            map[code] = cb;
+        } else if ((cb.status && cb.status !== existing.status) && cb.updatedAt) {
+            map[code] = cb;
+        }
+    });
+
+    return Object.values(map).map(normalizeBooking);
+};
 
 /**
  * @returns {{
@@ -34,20 +89,35 @@ export function useAdminBookings() {
         setLoading(true);
         setError(null);
 
-        // Fetch bookings and resources in parallel for efficiency
-        const [bookingsResult, resourcesResult] = await Promise.all([
-            fetchAdminBookings(),
-            fetchAllResources(),
-        ]);
+        const userId = getUserIdFromToken();
+        let bookingsResult = { data: [] };
+        if (userId && userId !== 'SYSTEM') {
+            bookingsResult = await fetchUserBookings(userId);
+        } else {
+            const cachedBookings = readBookingsCache();
+            if (cachedBookings.length > 0) {
+                bookingsResult = { data: cachedBookings.map(normalizeBooking) };
+            } else {
+                bookingsResult = { data: [] };
+            }
+        }
+
+        const resourcesResult = await fetchAllResources();
 
         if (bookingsResult.error) {
-            setError(bookingsResult.error);
+            const cachedBookings = readBookingsCache();
+            if (cachedBookings.length > 0) {
+                setBookings(cachedBookings.map(normalizeBooking));
+                setError('Showing cached bookings because live booking data is unavailable.');
+            } else {
+                setBookings([]);
+                setError(bookingsResult.error);
+            }
         } else {
-            const normalized = (Array.isArray(bookingsResult.data) ? bookingsResult.data : []).map((b) => {
-                const facilityId = b?.facilityId ?? b?.resourceId ?? null;
-                return { ...b, facilityId, resourceId: facilityId };
-            });
-            setBookings(normalized);
+                const apiList = (Array.isArray(bookingsResult.data) ? bookingsResult.data : []).map(normalizeBooking);
+                const cachedBookings = readBookingsCache();
+                const merged = mergeBookings(apiList, cachedBookings);
+                setBookings(merged);
         }
 
         // Build facilityId/resourceId -> name map regardless of booking errors
@@ -60,6 +130,20 @@ export function useAdminBookings() {
             }
         });
         setResourcesMap(map);
+
+        if (!userId || userId === 'SYSTEM') {
+            const cachedResources = bookingCache.getResources() || [];
+            if (cachedResources.length > 0 && Object.keys(map).length === 0) {
+                const fallbackMap = {};
+                cachedResources.forEach((resource) => {
+                    const id = resource?.id ?? resource?.facilityId ?? resource?.resourceId;
+                    if (id != null) {
+                        fallbackMap[String(id)] = resource?.name || 'Unnamed Facility';
+                    }
+                });
+                setResourcesMap(fallbackMap);
+            }
+        }
 
         setLoading(false);
     }, []);
