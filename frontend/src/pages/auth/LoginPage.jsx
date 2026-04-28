@@ -21,10 +21,17 @@ export default function LoginPage() {
 
   const from = location.state?.from || '/home'
 
+  const handleRoleChange = (event) => {
+    const nextRole = event.target.value
+    setRole(nextRole)
+    localStorage.setItem('ush_active_role', nextRole)
+  }
+
   const handleLocalLogin = async (e) => {
     e.preventDefault()
     setIsLoading(true)
     setError('')
+    localStorage.setItem('ush_active_role', role)
     try {
       const response = await login({ email, password }, role)
       if (response && response.jwtToken) {
@@ -71,7 +78,7 @@ export default function LoginPage() {
       <form onSubmit={handleLocalLogin} className="stack">
         <div className="stack" style={{ gap: 'var(--space-2)' }}>
           <label htmlFor="role">I am a...</label>
-          <select id="role" value={role} onChange={(e) => setRole(e.target.value)} style={{ padding: 'var(--space-2)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)' }}>
+          <select id="role" value={role} onChange={handleRoleChange} style={{ padding: 'var(--space-2)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)' }}>
             <option value="Student">Student</option>
             <option value="Lecturer">Lecturer</option>
             <option value="Admin">Admin</option>

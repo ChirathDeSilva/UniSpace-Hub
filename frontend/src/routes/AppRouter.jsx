@@ -11,6 +11,7 @@ import AdminBookingHandlingPage from '../pages/admin/AdminBookingHandlingPage'
 import AdminFacilityListPage from '../pages/admin/AdminFacilityListPage'
 import AdminLoggingHandlingPage from '../pages/admin/AdminLoggingHandlingPage'
 import AdminTicketHandlingPage from '../pages/admin/AdminTicketHandlingPage'
+import SlaDashboardPage from '../pages/admin/SlaDashboardPage'
 import AdminUsersPage from '../pages/admin/AdminUsersPage'
 import BookingPage from '../pages/booking/BookingPage'
 import ContactUsPage from '../pages/contact/ContactUsPage'
@@ -23,6 +24,8 @@ import NotFoundPage from '../pages/common/NotFoundPage'
 import NotificationsPage from '../pages/notifications/NotificationsPage'
 import ProfilePage from '../pages/profile/ProfilePage'
 import TicketingPage from '../pages/ticketing/TicketingPage'
+import TicketDetailsPage from '../pages/ticketing/TicketDetailsPage'
+import TechnicianTicketsPage from '../pages/ticketing/TechnicianTicketsPage'
 import UnauthorizedPage from '../pages/common/UnauthorizedPage'
 
 export default function AppRouter() {
@@ -43,6 +46,10 @@ export default function AppRouter() {
           <Route path="/home" element={<HomePage />} />
           <Route path="/facility-portal" element={<FacilityPortalPage />} />
           <Route path="/ticketing" element={<TicketingPage />} />
+          <Route path="/user/tickets" element={<TicketingPage />} />
+          <Route path="/user/tickets/:id" element={<TicketDetailsPage role="user" />} />
+          <Route path="/technician/tickets" element={<TechnicianTicketsPage />} />
+          <Route path="/technician/tickets/:id" element={<TicketDetailsPage role="technician" />} />
           <Route path="/booking" element={<BookingPage />} />
           <Route path="/contact-us" element={<ContactUsPage />} />
           <Route path="/about-us" element={<AboutUsPage />} />
@@ -62,6 +69,8 @@ export default function AppRouter() {
           <Route path="/admin/add-facility" element={<AdminAddFacilityPage />} />
           <Route path="/admin/facility-list" element={<AdminFacilityListPage />} />
           <Route path="/admin/ticket-handling" element={<AdminTicketHandlingPage />} />
+          <Route path="/admin/sla-dashboard" element={<SlaDashboardPage />} />
+          <Route path="/admin/tickets/:id" element={<TicketDetailsPage role="admin" />} />
           <Route path="/admin/booking-handling" element={<AdminBookingHandlingPage />} />
           <Route path="/admin/logging-handling" element={<AdminLoggingHandlingPage />} />
           <Route path="/admin/users" element={<AdminUsersPage />} />

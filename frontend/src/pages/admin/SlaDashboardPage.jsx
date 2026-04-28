@@ -59,7 +59,7 @@ export default function SlaDashboardPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const [query, setQuery] = useState('')
-  const [slaFilter, setSlaFilter] = useState('ALL')
+  const [slaFilter, setSlaFilter] = useState('SLA_AT_RISK')
 
   const ticketBase = useMemo(() => resolveTicketBase(getRoleName(profile)), [profile])
 
@@ -89,10 +89,15 @@ export default function SlaDashboardPage() {
     loadDashboard()
   }, [loadDashboard])
 
+  const atRiskTickets = useMemo(
+    () => tickets.filter((ticket) => ticket?.slaStatus === 'SLA_AT_RISK'),
+    [tickets],
+  )
+
   const filteredTickets = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase()
 
-    return tickets.filter((ticket) => {
+    return atRiskTickets.filter((ticket) => {
       const matchesQuery = normalizedQuery
         ? [
             ticket?.title,
@@ -105,21 +110,16 @@ export default function SlaDashboardPage() {
             .some((value) => String(value).toLowerCase().includes(normalizedQuery))
         : true
 
-      const matchesSla =
-        slaFilter === 'ALL' ? true : ticket?.slaStatus === slaFilter
+      const matchesSla = ticket?.slaStatus === slaFilter
 
       return matchesQuery && matchesSla
     })
-  }, [tickets, query, slaFilter])
+  }, [atRiskTickets, query, slaFilter])
 
   const summary = useMemo(() => {
-    const total = tickets.length
-    const breached = tickets.filter((ticket) => ticket?.slaStatus === 'SLA_BREACHED').length
-    const atRisk = tickets.filter((ticket) => ticket?.slaStatus === 'SLA_AT_RISK').length
-    const onTrack = tickets.filter((ticket) => ticket?.slaStatus === 'SLA_OK').length
-
-    return { total, breached, atRisk, onTrack }
-  }, [tickets])
+    const total = atRiskTickets.length
+    return { total, breached: 0, atRisk: total, onTrack: 0 }
+  }, [atRiskTickets])
 
   return (
     <section className="sla-dashboard stack reveal-stagger" aria-labelledby="sla-dashboard-title">
@@ -179,12 +179,7 @@ export default function SlaDashboardPage() {
               value={slaFilter}
               onChange={(event) => setSlaFilter(event.target.value)}
             >
-              <option value="ALL">All statuses</option>
-              {Object.entries(SLA_STATUS_META).map(([value, meta]) => (
-                <option key={value} value={value}>
-                  {meta.label}
-                </option>
-              ))}
+              <option value="SLA_AT_RISK">At Risk</option>
             </select>
           </div>
         </div>

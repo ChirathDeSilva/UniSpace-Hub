@@ -3,6 +3,7 @@
    =============================== */
 
 :root {
+  --color-ticket-new: #7c3aed;
   --color-ticket-open: #0056d2;
   --color-ticket-in-progress: #f29f05;
   --color-ticket-resolved: #16a34a;
@@ -128,6 +129,10 @@
 }
 
 /* STATUS COLORS */
+.ticket-status-new {
+  background: var(--color-ticket-new);
+}
+
 .ticket-status-open {
   background: var(--color-ticket-open);
 }
@@ -177,6 +182,29 @@
 .ticket-icon-btn:hover {
   transform: scale(1.1);
   background: var(--color-primary-soft);
+}
+
+.file-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.file-chip-remove {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+}
+
+.ticket-link-button {
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  color: var(--color-primary);
+  text-decoration: underline;
 }
 
 /* =========================

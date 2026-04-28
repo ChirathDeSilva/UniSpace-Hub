@@ -2,21 +2,50 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Button from '../../components/ui/Button'
 import Card from '../../components/ui/Card'
+import { getProfile } from '../../services/authService'
+import { getFacilities, subscribeFacilities } from '../../services/facilityStorage'
+import {
+  addTicketAttachment,
+  createTicket,
+  deleteTicketAttachment,
+  deleteTicket,
+  getTicketAttachments,
+  getTickets,
+  updateTicketByOwner,
+} from '../../services/ticketService'
 import {
   STATUS,
   categories,
-  currentTechnician,
-  currentUser,
   formatStatus,
-  loadTickets,
-  nextTicketId,
   priorities,
-  saveTickets,
   statusClass,
   statusMeta,
 } from './ticketStore'
 // ✅ NEW: Icons for modern action buttons
 import { FaEye, FaEdit, FaTrash } from 'react-icons/fa'
+
+const MAX_ATTACHMENTS = 3
+const MAX_PHONE_DIGITS = 10
+
+function getErrorMessage(error, fallback) {
+  if (typeof error?.response?.data === 'string') {
+    return error.response.data
+  }
+
+  if (error?.response?.data?.message) {
+    return error.response.data.message
+  }
+
+  return fallback
+}
+
+function formatAssignee(name, id) {
+  if (!name || !id) {
+    return ''
+  }
+
+  return `${name} - ${id}`
+}
 
 function ToastStack({ toasts, onRemove }) {
   return (
@@ -41,7 +70,9 @@ function ToastStack({ toasts, onRemove }) {
   )
 }
 
-function RoleBanner({ role }) {
+function RoleBanner({ role, profile }) {
+  const profileName = profile?.name || profile?.fullName || 'Current user'
+  const profileId = profile?.id ? ` (${profile.id})` : ''
   const title =
     role === 'admin'
       ? 'Admin Ticket Dashboard'
@@ -53,7 +84,7 @@ function RoleBanner({ role }) {
     role === 'admin'
       ? 'View and manage every ticket across the university.'
       : role === 'technician'
-        ? `Assigned to ${currentTechnician.name} (${currentTechnician.id}).`
+        ? `Assigned to ${profileName}${profileId}.`
         : 'Create, track, edit, and cancel your own tickets.'
 
   return (
@@ -91,11 +122,13 @@ function Filters({ role, filters, technicians, onChange, searchPlaceholder }) {
             onChange={(event) => onChange('status', event.target.value)}
           >
             <option value="ALL">All Statuses</option>
-            {Object.keys(statusMeta).map((status) => (
-              <option key={status} value={status}>
-                {formatStatus(status)}
-              </option>
-            ))}
+            {Object.keys(statusMeta)
+              .filter((status) => role === 'user' || status !== STATUS.CANCELLED)
+              .map((status) => (
+                <option key={status} value={status}>
+                  {formatStatus(status)}
+                </option>
+              ))}
           </select>
         </div>
 
@@ -189,7 +222,7 @@ function TicketList({ role, tickets, onView, onEdit, onDelete }) {
               
 
               <span data-label="Technician">
-                {ticket.assignedTechnicianName || 'Unassigned'}
+                {formatAssignee(ticket.assignedTechnicianName, ticket.assignedTechnicianId)}
               </span>
 
               {/* ✅ UPDATED ACTION BUTTONS WITH ICONS */}
@@ -337,15 +370,18 @@ function Modal({ title, children, onClose }) {
 }
 
 export default function RoleTicketsPage({ role = 'user' }) {
-  const [tickets, setTickets] = useState(() => loadTickets())
+  const [tickets, setTickets] = useState([])
+  const [profile, setProfile] = useState(null)
+  const [facilities, setFacilities] = useState([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
   const [toasts, setToasts] = useState([])
   const navigate = useNavigate()
   const [filters, setFilters] = useState({
     search: '',
     status: 'ALL',
     priority: 'ALL',
-    technician: role === 'technician' ? currentTechnician.id : 'ALL',
+    technician: 'ALL',
   })
 
   const [showCreateModal, setShowCreateModal] = useState(false)
@@ -356,15 +392,70 @@ export default function RoleTicketsPage({ role = 'user' }) {
     description: '',
     category: '',
     priority: '',
-    facility: '',
+    location: '',
+    contactDetails: '',
+    facilityId: '',
     attachments: [],
+    newAttachments: [],
   })
   const [formError, setFormError] = useState('')
   const [deleteTarget, setDeleteTarget] = useState(null)
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 450)
-    return () => clearTimeout(timer)
+    let isActive = true
+
+    const loadTicketsAndProfile = async () => {
+      setIsLoading(true)
+      try {
+        const [profileData, ticketData] = await Promise.all([getProfile(), getTickets()])
+        if (!isActive) {
+          return
+        }
+        setProfile(profileData)
+        setTickets(ticketData)
+        if (role === 'technician' && profileData?.id) {
+          setFilters((prev) => ({ ...prev, technician: profileData.id }))
+        }
+      } catch (error) {
+        if (isActive) {
+          setTickets([])
+          addToast('Failed to load tickets. Please try again.', 'error')
+        }
+      } finally {
+        if (isActive) {
+          setIsLoading(false)
+        }
+      }
+    }
+
+    loadTicketsAndProfile()
+    return () => {
+      isActive = false
+    }
+  }, [role])
+
+  useEffect(() => {
+    let isActive = true
+
+    const syncFacilities = async () => {
+      try {
+        const nextFacilities = await getFacilities()
+        if (isActive) {
+          setFacilities(nextFacilities)
+        }
+      } catch {
+        if (isActive) {
+          setFacilities([])
+        }
+      }
+    }
+
+    syncFacilities()
+    const unsubscribe = subscribeFacilities(syncFacilities)
+    return () => {
+      isActive = false
+      unsubscribe()
+    }
   }, [])
 
   const technicians = useMemo(() => {
@@ -377,11 +468,6 @@ export default function RoleTicketsPage({ role = 'user' }) {
         })
       }
     })
-
-    if (!map.has(currentTechnician.id)) {
-      map.set(currentTechnician.id, currentTechnician)
-    }
-
     return Array.from(map.values())
   }, [tickets])
 
@@ -389,11 +475,14 @@ export default function RoleTicketsPage({ role = 'user' }) {
     return tickets
       .filter((ticket) => {
         if (role === 'technician') {
-          return ticket.assignedTechnicianId === currentTechnician.id
+          const isAssigned = ticket.assignedTechnicianId === profile?.id
+          const isNewUnassigned =
+            ticket.status === STATUS.NEW && !ticket.assignedTechnicianId
+          return isAssigned || isNewUnassigned
         }
 
         if (role === 'user') {
-          return ticket.createdBy.id === currentUser.id
+          return profile?.id ? ticket.createdBy.id === profile.id : false
         }
 
         return true
@@ -407,7 +496,11 @@ export default function RoleTicketsPage({ role = 'user' }) {
           return false
         }
 
-        if (filters.technician !== 'ALL' && ticket.assignedTechnicianId !== filters.technician) {
+        if (
+          role !== 'technician' &&
+          filters.technician !== 'ALL' &&
+          ticket.assignedTechnicianId !== filters.technician
+        ) {
           return false
         }
 
@@ -419,12 +512,7 @@ export default function RoleTicketsPage({ role = 'user' }) {
 
         return true
       })
-  }, [tickets, role, filters])
-
-  function persistTickets(next) {
-    setTickets(next)
-    saveTickets(next)
-  }
+  }, [tickets, role, filters, profile])
 
   function addToast(message, type = 'success') {
     const id = `toast-${Date.now()}-${Math.random()}`
@@ -448,45 +536,110 @@ export default function RoleTicketsPage({ role = 'user' }) {
       description: '',
       category: '',
       priority: '',
-      facility: '',
+      location: '',
+      contactDetails: '',
+      facilityId: '',
       attachments: [],
+      newAttachments: [],
     })
     setFormError('')
     setEditModeTicketId(null)
     setShowCreateModal(true)
   }
 
-  function openEditModal(ticket) {
+  async function openEditModal(ticket) {
     setFormValues({
       title: ticket.title,
       description: ticket.description,
       category: ticket.category,
       priority: ticket.priority,
-      facility: ticket.facility?.name || '',
-      attachments: ticket.attachments,
+      location: ticket.location ?? '',
+      contactDetails: ticket.contactDetails ?? '',
+      facilityId: ticket.facility?.id ?? '',
+      attachments: [],
+      newAttachments: [],
     })
     setFormError('')
     setEditModeTicketId(ticket.id)
     setShowCreateModal(true)
+
+    try {
+      const existing = await getTicketAttachments(ticket.id)
+      setFormValues((prev) => ({ ...prev, attachments: existing }))
+    } catch {
+      addToast('Unable to load attachments for this ticket.', 'error')
+    }
+  }
+
+  function handleContactDetailsChange(value) {
+    const digitsOnly = value.replace(/\D/g, '').slice(0, MAX_PHONE_DIGITS)
+    setFormValues((prev) => ({ ...prev, contactDetails: digitsOnly }))
+  }
+
+  function removeNewAttachment(name) {
+    setFormValues((prev) => ({
+      ...prev,
+      newAttachments: prev.newAttachments.filter((file) => file.name !== name),
+    }))
+  }
+
+  async function removeExistingAttachment(attachmentId) {
+    try {
+      await deleteTicketAttachment(attachmentId)
+      setFormValues((prev) => ({
+        ...prev,
+        attachments: prev.attachments.filter((item) => item.id !== attachmentId),
+      }))
+      addToast('Attachment removed.', 'success')
+    } catch (error) {
+      addToast(getErrorMessage(error, 'Unable to remove attachment.'), 'error')
+    }
   }
 
   function handleFiles(event) {
-    const files = Array.from(event.target.files || []).map((file) => file.name)
-    if (files.length > 3) {
-      setFormError('Maximum 3 attachment files are allowed.')
+    const incoming = Array.from(event.target.files || [])
+    const currentCount = formValues.attachments.length + formValues.newAttachments.length
+    const remaining = MAX_ATTACHMENTS - currentCount
+
+    if (remaining <= 0) {
+      setFormError(`Maximum ${MAX_ATTACHMENTS} attachment files are allowed.`)
       return
     }
 
-    setFormError('')
-    setFormValues((prev) => ({ ...prev, attachments: files }))
+    const accepted = incoming.slice(0, remaining)
+    if (incoming.length > remaining) {
+      setFormError(`Maximum ${MAX_ATTACHMENTS} attachment files are allowed.`)
+    } else {
+      setFormError('')
+    }
+
+    setFormValues((prev) => ({
+      ...prev,
+      newAttachments: [...prev.newAttachments, ...accepted],
+    }))
   }
 
-  function saveTicket(event) {
+  async function saveTicket(event) {
     event.preventDefault()
 
-    const { title, description, category, priority, facility, attachments } = formValues
-    if (!title.trim() || !description.trim() || !category || !priority) {
-      setFormError('Please complete all required fields.')
+    const {
+      title,
+      description,
+      category,
+      priority,
+      location,
+      contactDetails,
+      facilityId,
+      newAttachments,
+    } = formValues
+
+    if (!title.trim() || !description.trim() || !category || !priority || !location.trim()) {
+      setFormError('Please complete all required fields (title, description, category, priority, location).')
+      return
+    }
+
+    if (contactDetails && contactDetails.length !== MAX_PHONE_DIGITS) {
+      setFormError('Phone number must contain exactly 10 digits.')
       return
     }
 
@@ -495,58 +648,51 @@ export default function RoleTicketsPage({ role = 'user' }) {
       return
     }
 
-    if (editModeTicketId) {
-      const next = tickets.map((ticket) => {
-        if (ticket.id !== editModeTicketId) {
-          return ticket
-        }
+    if (!profile?.id) {
+      setFormError('Your session is missing profile data. Please sign in again.')
+      return
+    }
 
-        return {
-          ...ticket,
-          title: title.trim(),
-          description: description.trim(),
-          category,
-          priority,
-          facility: facility.trim()
-            ? {
-                name: facility.trim(),
-                status: ticket.facility?.status || 'Open',
-              }
-            : null,
-          attachments,
-        }
-      })
-      persistTickets(next)
-      addToast('Ticket updated.')
-    } else {
-      const newTicket = {
-        id: nextTicketId(tickets),
+    setIsSaving(true)
+    try {
+      const payload = {
         title: title.trim(),
         description: description.trim(),
         category,
         priority,
-        status: STATUS.OPEN,
-        assignedTechnicianId: currentTechnician.id,
-        assignedTechnicianName: currentTechnician.name,
-        facility: facility.trim() ? { name: facility.trim(), status: 'Open' } : null,
-        createdAt: new Date().toISOString().slice(0, 10),
-        createdBy: { id: currentUser.id, name: currentUser.name },
-        attachments,
-        comments: [
-          {
-            id: `C-${Math.floor(Math.random() * 100000)}`,
-            author: 'System',
-            text: 'Ticket created and queued for review.',
-            createdAt: new Date().toLocaleString(),
-          },
-        ],
+        location: location.trim(),
+        contactDetails: contactDetails.trim() || null,
+        facilityId: facilityId ? Number(facilityId) : null,
       }
-      const next = [newTicket, ...tickets]
-      persistTickets(next)
-      addToast('Ticket created successfully.')
-    }
 
-    setShowCreateModal(false)
+      let savedTicket
+      if (editModeTicketId) {
+        savedTicket = await updateTicketByOwner(editModeTicketId, {
+          ...payload,
+          userId: profile.id,
+        })
+      } else {
+        savedTicket = await createTicket({
+          ...payload,
+          createdByUserId: profile.id,
+        })
+      }
+
+      if (newAttachments.length > 0) {
+        await Promise.all(
+          newAttachments.map((file) => addTicketAttachment(savedTicket.id, file))
+        )
+      }
+
+      const refreshed = await getTickets()
+      setTickets(refreshed)
+      addToast(editModeTicketId ? 'Ticket updated.' : 'Ticket created successfully.')
+      setShowCreateModal(false)
+    } catch (error) {
+      setFormError(getErrorMessage(error, 'Unable to save ticket. Please try again.'))
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   function openDetail(ticketId, mode) {
@@ -559,15 +705,21 @@ export default function RoleTicketsPage({ role = 'user' }) {
     navigate(`${basePath}/${ticketId}`, mode ? { state: { mode } } : undefined)
   }
 
-  function confirmDelete() {
+  async function confirmDelete() {
     if (!deleteTarget) {
       return
     }
 
-    const next = tickets.filter((ticket) => ticket.id !== deleteTarget)
-    persistTickets(next)
-    setDeleteTarget(null)
-    addToast('Ticket deleted.')
+    try {
+      await deleteTicket(deleteTarget)
+      const refreshed = await getTickets()
+      setTickets(refreshed)
+      addToast('Ticket deleted.')
+    } catch (error) {
+      addToast(getErrorMessage(error, 'Unable to delete ticket. Please try again.'), 'error')
+    } finally {
+      setDeleteTarget(null)
+    }
   }
 
   const filterPlaceholder =
@@ -579,7 +731,7 @@ export default function RoleTicketsPage({ role = 'user' }) {
 
   return (
     <section className="ticket-workspace ticket-fullwidth stack reveal-stagger">
-      <RoleBanner role={role} />
+      <RoleBanner role={role} profile={profile} />
 
       {role === 'user' ? (
         <div className="ticket-top-actions">
@@ -623,11 +775,11 @@ export default function RoleTicketsPage({ role = 'user' }) {
             <div className="ticket-user-grid">
               <div className="field">
                 <label htmlFor="user-id">User ID</label>
-                <input id="user-id" value={currentUser.id} readOnly />
+                <input id="user-id" value={profile?.id ?? ''} readOnly />
               </div>
               <div className="field">
                 <label htmlFor="user-name">Name</label>
-                <input id="user-name" value={currentUser.name} readOnly />
+                <input id="user-name" value={profile?.name ?? ''} readOnly />
               </div>
             </div>
 
@@ -743,12 +895,12 @@ export default function RoleTicketsPage({ role = 'user' }) {
             <div className="ticket-form-row">
               <div>
                 <label>User ID</label>
-                <input value={currentUser.id} readOnly />
+                <input value={profile?.id ?? ''} readOnly />
               </div>
 
               <div>
                 <label>Name</label>
-                <input value={currentUser.name} readOnly />
+                <input value={profile?.name ?? ''} readOnly />
               </div>
             </div>
           </div>
@@ -811,14 +963,43 @@ export default function RoleTicketsPage({ role = 'user' }) {
             </div>
 
             <div className="full">
-              <label>Facility (optional)</label>
+              <label>Location</label>
               <input
-                value={formValues.facility}
+                value={formValues.location}
                 onChange={(e) =>
-                  setFormValues(prev => ({ ...prev, facility: e.target.value }))
+                  setFormValues((prev) => ({ ...prev, location: e.target.value }))
                 }
                 placeholder="Lecture Hall / Lab / etc."
+                required
               />
+            </div>
+
+            <div className="full">
+              <label>Contact Details (optional)</label>
+              <input
+                value={formValues.contactDetails}
+                onChange={(e) => handleContactDetailsChange(e.target.value)}
+                inputMode="numeric"
+                pattern="\d{10}"
+                placeholder="10-digit phone number"
+              />
+            </div>
+
+            <div className="full">
+              <label>Facility (optional)</label>
+              <select
+                value={formValues.facilityId}
+                onChange={(e) =>
+                  setFormValues((prev) => ({ ...prev, facilityId: e.target.value }))
+                }
+              >
+                <option value="">No facility</option>
+                {facilities.map((facility) => (
+                  <option key={facility.id} value={facility.id}>
+                    {facility.name} ({facility.location})
+                  </option>
+                ))}
+              </select>
             </div>
 
           </div>
@@ -826,13 +1007,45 @@ export default function RoleTicketsPage({ role = 'user' }) {
 
           {/* ATTACHMENTS */}
           <div className="ticket-form-card">
-            <label>Attachments (max 3 files)</label>
-            <input type="file" multiple onChange={handleFiles} />
+            <label>Attachments (max {MAX_ATTACHMENTS} files)</label>
+            <input
+              type="file"
+              multiple
+              onChange={handleFiles}
+              disabled={
+                formValues.attachments.length + formValues.newAttachments.length >= MAX_ATTACHMENTS
+              }
+            />
 
-            {formValues.attachments.length > 0 && (
+            {[...formValues.attachments, ...formValues.newAttachments].length > 0 && (
               <div className="ticket-file-preview">
-                {formValues.attachments.map(f => (
-                  <span key={f} className="file-chip">{f}</span>
+                {formValues.attachments.map((attachment) => (
+                  <span key={attachment.id ?? attachment.fileName} className="file-chip">
+                    {attachment.fileName}
+                    {attachment.id ? (
+                      <button
+                        type="button"
+                        className="file-chip-remove"
+                        onClick={() => removeExistingAttachment(attachment.id)}
+                        aria-label={`Remove ${attachment.fileName}`}
+                      >
+                        x
+                      </button>
+                    ) : null}
+                  </span>
+                ))}
+                {formValues.newAttachments.map((file) => (
+                  <span key={file.name} className="file-chip">
+                    {file.name}
+                    <button
+                      type="button"
+                      className="file-chip-remove"
+                      onClick={() => removeNewAttachment(file.name)}
+                      aria-label={`Remove ${file.name}`}
+                    >
+                      x
+                    </button>
+                  </span>
                 ))}
               </div>
             )}
@@ -849,8 +1062,12 @@ export default function RoleTicketsPage({ role = 'user' }) {
 
           {/* ACTION BAR */}
           <div className="ticket-form-actions-fancy">
-            <Button type="submit">
-              {editModeTicketId ? 'Update Ticket' : 'Submit Ticket'}
+            <Button type="submit" disabled={isSaving}>
+              {isSaving
+                ? 'Saving...'
+                : editModeTicketId
+                  ? 'Update Ticket'
+                  : 'Submit Ticket'}
             </Button>
 
             <Button
