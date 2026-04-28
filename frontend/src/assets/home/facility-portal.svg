@@ -1,0 +1,11 @@
+<svg width="640" height="360" viewBox="0 0 640 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Facility portal illustration">
+  <rect width="640" height="360" fill="#E3F2FD"/>
+  <rect x="70" y="60" width="500" height="240" rx="16" fill="#FFFFFF" stroke="#C7DDF8" stroke-width="4"/>
+  <rect x="100" y="92" width="180" height="18" rx="9" fill="#0056D2"/>
+  <rect x="100" y="130" width="440" height="14" rx="7" fill="#D4E7FC"/>
+  <rect x="100" y="156" width="440" height="14" rx="7" fill="#D4E7FC"/>
+  <rect x="100" y="182" width="300" height="14" rx="7" fill="#D4E7FC"/>
+  <rect x="100" y="224" width="120" height="34" rx="8" fill="#003366"/>
+  <circle cx="520" cy="88" r="30" fill="#003366"/>
+  <rect x="503" y="73" width="34" height="30" rx="4" fill="#E3F2FD"/>
+</svg>
