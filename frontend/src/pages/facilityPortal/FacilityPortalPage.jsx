@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import Button from '../../components/ui/Button'
 import Card from '../../components/ui/Card'
 import { getFacilities, subscribeFacilities } from '../../services/facilityStorage'
 import {
@@ -10,13 +12,24 @@ import {
 } from '../../services/facilityTypeConfig'
 
 export default function FacilityPortalPage() {
-  const [facilities, setFacilities] = useState(() => getFacilities())
+  const navigate = useNavigate()
+  const [facilities, setFacilities] = useState([])
   const [selectedType, setSelectedType] = useState('ALL')
   const [selectedStatus, setSelectedStatus] = useState('ALL')
   const [searchTerm, setSearchTerm] = useState('')
 
   useEffect(() => {
-    const sync = () => setFacilities(getFacilities())
+    const sync = async () => {
+      try {
+        const nextFacilities = await getFacilities()
+        setFacilities(nextFacilities)
+      } catch {
+        setFacilities([])
+      }
+    }
+
+    // Keep the effect itself synchronous so React receives a cleanup function.
+    sync()
     const unsubscribe = subscribeFacilities(sync)
     return unsubscribe
   }, [])
@@ -114,8 +127,12 @@ export default function FacilityPortalPage() {
       ) : (
         <div className="facility-card-grid" aria-label="Facilities card view">
           {filteredFacilities.map((facility) => (
-            <Card key={facility.id} className="facility-card">
-              <div className="stack" style={{ gap: '0.5rem' }}>
+            <Card
+              key={facility.id}
+              className="facility-card"
+              style={{ display: 'flex', flexDirection: 'column' }}
+            >
+              <div className="stack" style={{ gap: '0.5rem', flex: 1 }}>
                 <h2>{facility.name}</h2>
                 <p className="facility-chip">{formatFacilityTypeLabel(facility.type)}</p>
                 <p className="facility-chip facility-chip-secondary">
@@ -131,6 +148,12 @@ export default function FacilityPortalPage() {
                 </ul>
                 {facility.description ? <p>{facility.description}</p> : null}
               </div>
+              <Button
+                className="facility-card-action"
+                onClick={() => navigate('/booking', { state: { facilityId: facility.id } })}
+              >
+                Book Now
+              </Button>
             </Card>
           ))}
         </div>

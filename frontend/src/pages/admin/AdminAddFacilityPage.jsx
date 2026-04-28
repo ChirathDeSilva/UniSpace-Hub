@@ -103,7 +103,7 @@ export default function AdminAddFacilityPage() {
     }))
   }
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
 
     const nextErrors = validate(formData, detailData)
@@ -114,19 +114,23 @@ export default function AdminAddFacilityPage() {
       return
     }
 
-    addFacility({
-      name: formData.name,
-      type: formData.type,
-      status: formData.status,
-      location: formData.location,
-      details: detailData,
-      description: formData.description,
-    })
+    try {
+      await addFacility({
+        name: formData.name,
+        type: formData.type,
+        status: formData.status,
+        location: formData.location,
+        details: detailData,
+        description: formData.description,
+      })
 
-    setFormData(initialForm)
-    setDetailData(initialDetails)
-    setErrors({})
-    setStatusMessage('Facility added successfully.')
+      setFormData(initialForm)
+      setDetailData(initialDetails)
+      setErrors({})
+      setStatusMessage('Facility added successfully.')
+    } catch {
+      setStatusMessage('Failed to add facility. Please check backend connection.')
+    }
   }
 
   const detailFields = getFacilityTypeFields(formData.type)

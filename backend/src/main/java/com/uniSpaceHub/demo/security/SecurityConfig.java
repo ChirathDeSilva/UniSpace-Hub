@@ -2,6 +2,7 @@ package com.uniSpaceHub.demo.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -9,6 +10,11 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 /**
  * Custom Spring Security configuration.
@@ -26,8 +32,9 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, CorsConfigurationSource corsConfigurationSource) throws Exception {
         http
+            .cors(cors -> cors.configurationSource(corsConfigurationSource))
             // ── CSRF ──────────────────────────────────────────────────────────
             // Disabled for stateless REST API (JWT-based, no session cookies).
             .csrf(AbstractHttpConfigurer::disable)
@@ -42,6 +49,8 @@ public class SecurityConfig {
                 // OAuth2 login/callback endpoints must be publicly accessible
                 // (the browser is not authenticated at this point)
                 .requestMatchers("/api/auth/**").permitAll()
+                // Facility CRUD is used directly by the public facility pages.
+                .requestMatchers("/api/facilities/**").permitAll()
                 // All other endpoints require a valid JWT (enforced elsewhere)
                 .anyRequest().authenticated()
             )
@@ -60,6 +69,23 @@ public class SecurityConfig {
      * Used by AuthController to verify hashed passwords for Admin and Technician logins.
      * Strength factor 12 is a good balance of security vs. performance.
      */
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(List.of(
+                "http://localhost:5173",
+                "http://127.0.0.1:5173",
+                "http://localhost:4173"
+        ));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/api/facilities/**", configuration);
+        return source;
+    }
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder(12);

@@ -577,12 +577,20 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--space-4);
+  align-items: stretch;
 }
 
 .facility-card {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: var(--space-4);
-  align-content: start;
+  height: 100%;
+  min-height: 24rem;
+}
+
+.facility-card-action {
+  margin-top: auto;
+  width: 100%;
 }
 
 .facility-card-media {

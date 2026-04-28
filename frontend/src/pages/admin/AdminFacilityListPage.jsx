@@ -92,13 +92,23 @@ function validate(formData) {
 }
 
 export default function AdminFacilityListPage() {
-  const [facilities, setFacilities] = useState(() => getFacilities())
+  const [facilities, setFacilities] = useState([])
   const [editingFacilityId, setEditingFacilityId] = useState(null)
   const [editFormData, setEditFormData] = useState(null)
   const [errors, setErrors] = useState({})
 
   useEffect(() => {
-    const sync = () => setFacilities(getFacilities())
+    const sync = async () => {
+      try {
+        const nextFacilities = await getFacilities()
+        setFacilities(nextFacilities)
+      } catch {
+        setFacilities([])
+      }
+    }
+
+    // Keep the effect itself synchronous so React receives a cleanup function.
+    sync()
     const unsubscribe = subscribeFacilities(sync)
     return unsubscribe
   }, [])
@@ -141,7 +151,7 @@ export default function AdminFacilityListPage() {
     }))
   }
 
-  const handleSave = (facilityId) => {
+  const handleSave = async (facilityId) => {
     const nextErrors = validate(editFormData)
     setErrors(nextErrors)
 
@@ -149,19 +159,29 @@ export default function AdminFacilityListPage() {
       return
     }
 
-    updateFacility(facilityId, editFormData)
-    setFacilities(getFacilities())
-    cancelEdit()
+    try {
+      await updateFacility(facilityId, editFormData)
+      const nextFacilities = await getFacilities()
+      setFacilities(nextFacilities)
+      cancelEdit()
+    } catch {
+      // Keep form open so user can retry.
+    }
   }
 
-  const handleDelete = (facilityId, facilityName) => {
+  const handleDelete = async (facilityId, facilityName) => {
     const isConfirmed = window.confirm(`Delete facility "${facilityName}"?`)
     if (!isConfirmed) {
       return
     }
 
-    deleteFacility(facilityId)
-    setFacilities(getFacilities())
+    try {
+      await deleteFacility(facilityId)
+      const nextFacilities = await getFacilities()
+      setFacilities(nextFacilities)
+    } catch {
+      return
+    }
 
     if (editingFacilityId === facilityId) {
       cancelEdit()
