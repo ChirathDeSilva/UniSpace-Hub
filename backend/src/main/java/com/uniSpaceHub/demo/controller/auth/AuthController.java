@@ -1,10 +1,19 @@
 package com.uniSpaceHub.demo.controller.auth;
 
+import com.uniSpaceHub.demo.dto.auth.GoogleTokenResponse;
+import com.uniSpaceHub.demo.dto.auth.GoogleUserInfo;
+import com.uniSpaceHub.demo.dto.auth.LoginRequest;
+import com.uniSpaceHub.demo.dto.auth.LoginResponse;
+import com.uniSpaceHub.demo.dto.auth.MicrosoftTokenResponse;
+import com.uniSpaceHub.demo.dto.auth.MicrosoftUserInfo;
 import com.uniSpaceHub.demo.model.User;
+import com.uniSpaceHub.demo.model.UserRole;
 import com.uniSpaceHub.demo.repository.UserRepository;
+import com.uniSpaceHub.demo.service.NotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
@@ -53,6 +62,12 @@ public class AuthController {
 
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private NotificationService notificationService;
 
     private final RestTemplate restTemplate = new RestTemplate();
 
@@ -146,6 +161,7 @@ public class AuthController {
             }
 
             userRepository.save(user);
+            notificationService.sendLoginAlert(user);
 
             // 5. Generate JWT and redirect to frontend
             String jwtToken = jwtTokenProvider.generateToken(user);
@@ -258,6 +274,7 @@ public class AuthController {
             }
 
             userRepository.save(user);
+            notificationService.sendLoginAlert(user);
 
             // 5. Generate JWT and redirect to frontend
             String jwtToken = jwtTokenProvider.generateToken(user);
@@ -269,5 +286,88 @@ public class AuthController {
             return new RedirectView(frontendErrorUrl + "&reason=internal_server_error");
         }
     }
-}
 
+    // =========================================================================
+    // CREDENTIAL-BASED LOGIN (Admin & Technician)
+    // =========================================================================
+
+    @PostMapping("/adminlogin")
+    public ResponseEntity<?> adminLogin(@RequestBody LoginRequest loginRequest) {
+        try {
+            Optional<User> userOptional = userRepository.findByEmail(loginRequest.getEmail());
+            if (userOptional.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+            }
+
+            User user = userOptional.get();
+
+            // Check if user has credential-based role
+            UserRole roleName = user.getRole().getName();
+            if (roleName != UserRole.ROLE_ADMIN) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+            }
+
+            if (user.getPassword() == null || !passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+            }
+
+            user.setLastLogin(LocalDateTime.now());
+            userRepository.save(user);
+            notificationService.sendLoginAlert(user);
+
+            String jwtToken = jwtTokenProvider.generateToken(user);
+
+            LoginResponse response = new LoginResponse(
+                    jwtToken,
+                    user.getEmail(),
+                    user.getFullName(),
+                    roleName.name()
+            );
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred during login");
+        }
+    }
+
+    @PostMapping("/technicianlogin")
+    public ResponseEntity<?> technicianLogin(@RequestBody LoginRequest loginRequest) {
+        try {
+            Optional<User> userOptional = userRepository.findByEmail(loginRequest.getEmail());
+            if (userOptional.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+            }
+
+            User user = userOptional.get();
+
+            // Check if user has credential-based role
+            UserRole roleName = user.getRole().getName();
+            if (roleName != UserRole.ROLE_TECHNICIAN) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+            }
+
+            if (user.getPassword() == null || !passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+            }
+
+            user.setLastLogin(LocalDateTime.now());
+            userRepository.save(user);
+            notificationService.sendLoginAlert(user);
+
+            String jwtToken = jwtTokenProvider.generateToken(user);
+
+            LoginResponse response = new LoginResponse(
+                    jwtToken,
+                    user.getEmail(),
+                    user.getFullName(),
+                    roleName.name()
+            );
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred during login");
+        }
+    }
+}

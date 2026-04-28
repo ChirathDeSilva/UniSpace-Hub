@@ -1,4 +1,4 @@
-package com.uniSpaceHub.demo.controller.auth;
+package com.uniSpaceHub.demo.dto.auth;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;

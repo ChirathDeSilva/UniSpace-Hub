@@ -6,6 +6,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
 /**
@@ -51,5 +53,15 @@ public class SecurityConfig {
             .oauth2Login(AbstractHttpConfigurer::disable);
 
         return http.build();
+    }
+
+    /**
+     * BCrypt password encoder bean.
+     * Used by AuthController to verify hashed passwords for Admin and Technician logins.
+     * Strength factor 12 is a good balance of security vs. performance.
+     */
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder(12);
     }
 }
