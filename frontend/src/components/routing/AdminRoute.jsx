@@ -1,7 +1,7 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import useAuth from '../../hooks/useAuth'
 
-const ADMIN_DEMO_MODE = true
+const ADMIN_DEMO_MODE = false
 
 function decodeJwtPayload(token) {
   try {

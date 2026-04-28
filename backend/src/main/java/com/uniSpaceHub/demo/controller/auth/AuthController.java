@@ -51,10 +51,10 @@ public class AuthController {
 
     // ─── Shared frontend redirect URLs ───────────────────────────────────────
 
-    @Value("${app.frontend.success-url:http://localhost:3000/oauth2/redirect}")
+    @Value("${app.frontend.success-url:http://localhost:5173/oauth2/redirect}")
     private String frontendSuccessUrl;
 
-    @Value("${app.frontend.error-url:http://localhost:3000/login?error=access_denied}")
+    @Value("${app.frontend.error-url:http://localhost:5173/login?error=access_denied}")
     private String frontendErrorUrl;
 
     @Autowired
@@ -361,6 +361,86 @@ public class AuthController {
             userRepository.save(user);
             notificationService.sendLoginAlert(user);
             loginAuditRepository.save(new com.uniSpaceHub.demo.model.audit.LoginAudit(user, LocalDateTime.now(), "TECHNICIAN_CREDENTIALS"));
+
+            String jwtToken = jwtTokenProvider.generateToken(user);
+
+            LoginResponse response = new LoginResponse(
+                    jwtToken,
+                    user.getEmail(),
+                    user.getFullName(),
+                    roleName.name()
+            );
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred during login");
+        }
+    }
+
+    @PostMapping("/studentlogin")
+    public ResponseEntity<?> studentLogin(@RequestBody LoginRequest loginRequest) {
+        try {
+            Optional<User> userOptional = userRepository.findByEmail(loginRequest.getEmail());
+            if (userOptional.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+            }
+
+            User user = userOptional.get();
+
+            UserRole roleName = user.getRole().getName();
+            if (roleName != UserRole.ROLE_STUDENT) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+            }
+
+            if (user.getPassword() == null || !passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+            }
+
+            user.setLastLogin(LocalDateTime.now());
+            userRepository.save(user);
+            notificationService.sendLoginAlert(user);
+            loginAuditRepository.save(new com.uniSpaceHub.demo.model.audit.LoginAudit(user, LocalDateTime.now(), "STUDENT_CREDENTIALS"));
+
+            String jwtToken = jwtTokenProvider.generateToken(user);
+
+            LoginResponse response = new LoginResponse(
+                    jwtToken,
+                    user.getEmail(),
+                    user.getFullName(),
+                    roleName.name()
+            );
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred during login");
+        }
+    }
+
+    @PostMapping("/lecturerlogin")
+    public ResponseEntity<?> lecturerLogin(@RequestBody LoginRequest loginRequest) {
+        try {
+            Optional<User> userOptional = userRepository.findByEmail(loginRequest.getEmail());
+            if (userOptional.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+            }
+
+            User user = userOptional.get();
+
+            UserRole roleName = user.getRole().getName();
+            if (roleName != UserRole.ROLE_LECTURER) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+            }
+
+            if (user.getPassword() == null || !passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+            }
+
+            user.setLastLogin(LocalDateTime.now());
+            userRepository.save(user);
+            notificationService.sendLoginAlert(user);
+            loginAuditRepository.save(new com.uniSpaceHub.demo.model.audit.LoginAudit(user, LocalDateTime.now(), "LECTURER_CREDENTIALS"));
 
             String jwtToken = jwtTokenProvider.generateToken(user);
 
