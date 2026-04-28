@@ -53,6 +53,15 @@ export default function AppRouter() {
         </Route>
       </Route>
 
+
+      --booking features
+      <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/booking" element={<Booking />} />
+                <Route path="/my-bookings" element={<MyBookings />} />
+                <Route path="/admin-dashboard" element={<AdminDashboard />} />
+      </Routes>
+
       <Route element={<DashboardLayout />}>
         <Route path="/dashboard" element={<DashboardHomePage />} />
       </Route>
