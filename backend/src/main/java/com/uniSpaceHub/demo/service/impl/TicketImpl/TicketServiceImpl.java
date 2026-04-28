@@ -17,6 +17,9 @@ import com.uniSpaceHub.demo.repository.Ticket.TicketRepository;
 import com.uniSpaceHub.demo.repository.Ticket.TicketWorkflowEventRepository;
 import com.uniSpaceHub.demo.service.Ticket.TicketService;
 import com.uniSpaceHub.demo.repository.UserRepository;
+import com.uniSpaceHub.demo.service.NotificationService;
+import com.uniSpaceHub.demo.model.NotificationType;
+import com.uniSpaceHub.demo.model.NotificationSeverity;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -40,6 +43,9 @@ public class TicketServiceImpl implements TicketService {
     @Autowired
     private TicketWorkflowEventRepository ticketWorkflowEventRepository;
 
+    @Autowired
+    private NotificationService notificationService;
+
     // CREATE TICKET
     // @Override
     // public Ticket createTicket(Ticket ticket) {
@@ -61,6 +67,11 @@ public class TicketServiceImpl implements TicketService {
         initializeSla(ticket, LocalDateTime.now());
         Ticket saved = ticketRepository.save(ticket);
         logWorkflow(saved, user, "TICKET_CREATED", null, TicketStatus.NEW, null, null, null);
+
+        String msgUser = "Ticket #" + saved.getId() + " raised successfully.";
+        String msgAdmin = "New Ticket #" + saved.getId() + ": " + saved.getTitle();
+        notificationService.createNotification(user, msgUser, NotificationType.TICKET, NotificationSeverity.INFO, saved.getId().toString());
+        notificationService.sendToUsersByRoles(List.of(UserRole.ROLE_ADMIN), msgAdmin, NotificationType.TICKET, NotificationSeverity.INFO, saved.getId().toString());
 
         return saved;
     }
@@ -123,6 +134,9 @@ public class TicketServiceImpl implements TicketService {
         Ticket saved = ticketRepository.save(ticket);
         logWorkflow(saved, technician, "TICKET_CLAIMED", previousStatus, TicketStatus.OPEN, null, null, null);
 
+        String msg = "Your ticket is now OPEN. Technician " + technician.getFullName() + " has been assigned.";
+        notificationService.createNotification(saved.getCreatedBy(), msg, NotificationType.TICKET, NotificationSeverity.INFO, saved.getId().toString());
+
         return saved;
     }
 
@@ -184,6 +198,18 @@ public class TicketServiceImpl implements TicketService {
         ticket.setStatus(newStatus);
         Ticket saved = ticketRepository.save(ticket);
         logWorkflow(saved, actor, "TICKET_STATUS_UPDATED", currentStatus, newStatus, null, null, rejectionReason);
+
+        if (newStatus == TicketStatus.REJECTED) {
+            String msg = "Ticket Rejected: " + rejectionReason + ".";
+            notificationService.createNotification(saved.getCreatedBy(), msg, NotificationType.TICKET, NotificationSeverity.ERROR, saved.getId().toString());
+        } else if (newStatus == TicketStatus.IN_PROGRESS) {
+            String msg = "Your ticket is processing.";
+            notificationService.createNotification(saved.getCreatedBy(), msg, NotificationType.TICKET, NotificationSeverity.INFO, saved.getId().toString());
+        } else if (newStatus == TicketStatus.RESOLVED) {
+            String msg = "Your issue is resolved.";
+            notificationService.createNotification(saved.getCreatedBy(), msg, NotificationType.TICKET, NotificationSeverity.SUCCESS, saved.getId().toString());
+        }
+
         return saved;
     }
 

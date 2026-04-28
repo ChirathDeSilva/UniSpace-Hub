@@ -4,6 +4,10 @@ import com.uniSpaceHub.demo.model.FacilityType;
 import com.uniSpaceHub.demo.model.FacilitiesModels.Facility;
 import com.uniSpaceHub.demo.model.FacilityStatus;
 import com.uniSpaceHub.demo.repository.FacilityRepository;
+import com.uniSpaceHub.demo.service.NotificationService;
+import com.uniSpaceHub.demo.model.NotificationType;
+import com.uniSpaceHub.demo.model.NotificationSeverity;
+import com.uniSpaceHub.demo.model.UserRole;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -12,18 +16,37 @@ import java.util.List;
 public class FacilityService {
 
     private final FacilityRepository facilityRepository;
+    private final NotificationService notificationService;
 
-    public FacilityService(FacilityRepository facilityRepository) {
+    public FacilityService(FacilityRepository facilityRepository, NotificationService notificationService) {
         this.facilityRepository = facilityRepository;
+        this.notificationService = notificationService;
     }
 
     //  CRUD Operations
     public Facility createFacility(Facility facility) {
-        return facilityRepository.save(facility);
+        Facility saved = facilityRepository.save(facility);
+        String msg = "New Facility Added: " + saved.getName() + " is now available!";
+        notificationService.sendToAllUsers(msg, NotificationType.FACILITY, NotificationSeverity.SUCCESS, saved.getId().toString());
+        return saved;
     }
 
     public Facility updateFacility(Facility facility) {
-        return facilityRepository.save(facility);
+        Facility existing = getFacilityById(facility.getId());
+        Facility saved = facilityRepository.save(facility);
+
+        if (existing.getStatus() != FacilityStatus.MAINTENANCE && saved.getStatus() == FacilityStatus.MAINTENANCE) {
+            String msg = "Notice: " + saved.getName() + " is under maintenance.";
+            notificationService.sendToUsersByRoles(
+                List.of(UserRole.ROLE_STUDENT, UserRole.ROLE_LECTURER), 
+                msg, 
+                NotificationType.FACILITY, 
+                NotificationSeverity.WARNING, 
+                saved.getId().toString()
+            );
+        }
+
+        return saved;
     }
 
     public void deleteFacility(Long id) {
