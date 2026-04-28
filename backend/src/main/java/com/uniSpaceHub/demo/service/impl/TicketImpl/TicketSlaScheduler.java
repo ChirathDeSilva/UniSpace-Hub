@@ -16,6 +16,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 
+//service level agreement scheduler to evaluate SLA status of tickets every minute and log breaches as workflow events
 @Service
 public class TicketSlaScheduler {
 
