@@ -19,7 +19,15 @@ public class User {
     private String pictureUrl;
 
     @Column(unique = true)
-    private String providerId; // Unique 'sub' ID from Google
+    private String providerId; // Unique 'sub' ID from Google/Microsoft
+
+    /**
+     * BCrypt-hashed password.
+     * Only set for ROLE_ADMIN and ROLE_TECHNICIAN (credential-based login).
+     * Null for lecturers and students who use OAuth only.
+     */
+    @Column(name = "password_hash")
+    private String password;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id", nullable = false)
@@ -53,6 +61,9 @@ public class User {
 
     public Role getRole() { return role; }
     public void setRole(Role role) { this.role = role; }
+
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
