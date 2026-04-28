@@ -29,9 +29,9 @@ const dashboardActions = [
     to: '/admin/booking-handling',
   },
   {
-    title: 'Logging Handling',
-    description: 'Inspect platform logs and monitor administrative actions.',
-    to: '/admin/logging-handling',
+    title: 'User Management',
+    description: 'Manage users, assign roles, and remove accounts.',
+    to: '/admin/users',
   },
 ]
 

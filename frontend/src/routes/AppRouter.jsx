@@ -11,12 +11,14 @@ import AdminFacilityListPage from '../pages/admin/AdminFacilityListPage'
 import AdminLoggingHandlingPage from '../pages/admin/AdminLoggingHandlingPage'
 import AdminTicketHandlingPage from '../pages/admin/AdminTicketHandlingPage'
 import SlaDashboardPage from '../pages/admin/SlaDashboardPage'
+import AdminUsersPage from '../pages/admin/AdminUsersPage'
 import BookingPage from '../pages/booking/BookingPage'
 import ContactUsPage from '../pages/contact/ContactUsPage'
 import DashboardHomePage from '../pages/dashboard/DashboardHomePage'
 import FacilityPortalPage from '../pages/facilityPortal/FacilityPortalPage'
 import HomePage from '../pages/home/HomePage'
 import LoginPage from '../pages/auth/LoginPage'
+import AuthCallbackPage from '../pages/auth/AuthCallbackPage'
 import NotFoundPage from '../pages/common/NotFoundPage'
 import NotificationsPage from '../pages/notifications/NotificationsPage'
 import ProfilePage from '../pages/profile/ProfilePage'
@@ -32,6 +34,7 @@ export default function AppRouter() {
       <Route element={<PublicLayout />}>
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/oauth2/redirect" element={<AuthCallbackPage />} />
         <Route path="/facility-portal" element={<FacilityPortalPage />} />
         <Route path="/ticketing" element={<TicketingPage />} />
         <Route path="/booking" element={<BookingPage />} />
@@ -58,8 +61,8 @@ export default function AppRouter() {
           <Route path="/admin/ticket-handling" element={<AdminTicketHandlingPage />} />
           <Route path="/admin/booking-handling" element={<AdminBookingHandlingPage />} />
           <Route path="/admin/logging-handling" element={<AdminLoggingHandlingPage />} />
+          <Route path="/admin/users" element={<AdminUsersPage />} />
 
-          <Route path="/admin/users" element={<Navigate to="/admin/facility-list" replace />} />
           <Route path="/admin/facilities" element={<Navigate to="/admin/facility-list" replace />} />
         </Route>
       </Route>

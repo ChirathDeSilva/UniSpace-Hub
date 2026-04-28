@@ -3,6 +3,7 @@ package com.uniSpaceHub.demo.model.FacilitiesModels;
 import jakarta.persistence.*;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.uniSpaceHub.demo.model.FacilityStatus;
+import java.time.LocalTime;
 import com.uniSpaceHub.demo.model.FacilityType;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 
@@ -49,6 +50,16 @@ public abstract class Facility {
     public FacilityType getType() { return type; }
     public void setType(FacilityType type) { this.type = type; }
 
-    public FacilityStatus getStatus() { return status; }
+    public FacilityStatus getStatus() {
+        LocalTime now = LocalTime.now();
+        LocalTime nightStart = LocalTime.of(20, 30); // 8:30 PM
+        LocalTime nightEnd = LocalTime.of(8, 30);   // 8:30 AM
+        // If current time is >= 20:30 or < 08:30, treat as NOT_IN_SERVICE
+        if (!now.isBefore(nightStart) || now.isBefore(nightEnd)) {
+            return FacilityStatus.NOT_IN_SERVICE;
+        }
+        return status;
+    }
+
     public void setStatus(FacilityStatus status) { this.status = status; }
 }

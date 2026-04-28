@@ -17,6 +17,9 @@ import com.uniSpaceHub.demo.repository.booking.BookingStatusHistoryRepository;
 import com.uniSpaceHub.demo.repository.UserRepository;
 import com.uniSpaceHub.demo.repository.FacilityRepository;
 import com.uniSpaceHub.demo.service.BookingService;
+import com.uniSpaceHub.demo.service.NotificationService;
+import com.uniSpaceHub.demo.model.NotificationType;
+import com.uniSpaceHub.demo.model.NotificationSeverity;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -68,6 +71,7 @@ public class BookingServiceImpl implements BookingService {
     private final BookingStatusHistoryRepository historyRepository;
     private final UserRepository userRepository;
     private final FacilityRepository facilityRepository;
+    private final NotificationService notificationService;
 
     @Override
     @Transactional(isolation = Isolation.SERIALIZABLE)
@@ -105,6 +109,10 @@ public class BookingServiceImpl implements BookingService {
         Booking saved = bookingRepository.save(booking);
 
         recordHistory(saved.getId(), null, BookingStatus.PENDING, request.getUserId().toString(), "Initial creation");
+        
+        String msg = "Booking for " + facility.getName() + " is pending approval.";
+        notificationService.createNotification(user, msg, NotificationType.BOOKING, NotificationSeverity.INFO, saved.getId().toString());
+        
         return mapToResponse(saved);
     }
 
@@ -139,6 +147,10 @@ public class BookingServiceImpl implements BookingService {
 
         recordHistory(saved.getId(), BookingStatus.PENDING, BookingStatus.PENDING, booking.getUserId().toString(),
                 "User updated booking details");
+                
+        String msg = "successfully updated";
+        notificationService.createNotification(saved.getUser(), msg, NotificationType.BOOKING, NotificationSeverity.INFO, saved.getId().toString());
+
         return mapToResponse(saved);
     }
 
