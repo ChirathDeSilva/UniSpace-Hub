@@ -2,6 +2,7 @@ package com.uniSpaceHub.demo.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -26,15 +27,22 @@ import java.util.List;
  *   even a request to /api/auth/microsoft/login — before the controller runs.
  * - This config disables that auto-redirect and opens /api/auth/** so our
  *   AuthController can handle both Google and Microsoft flows manually.
+ * - CORS is configured to allow the Vite dev server (port 5173) to make
+ *   cross-origin requests to this backend (port 8081).
  */
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity   // enables @PreAuthorize on controller methods
 public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, CorsConfigurationSource corsConfigurationSource) throws Exception {
         http
-            .cors(cors -> cors.configurationSource(corsConfigurationSource))
+            // ── CORS ──────────────────────────────────────────────────────────
+            // Must be enabled BEFORE csrf so that Spring Security uses our
+            // CorsConfigurationSource bean to resolve pre-flight OPTIONS requests.
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+
             // ── CSRF ──────────────────────────────────────────────────────────
             // Disabled for stateless REST API (JWT-based, no session cookies).
             .csrf(AbstractHttpConfigurer::disable)
@@ -62,6 +70,24 @@ public class SecurityConfig {
             .oauth2Login(AbstractHttpConfigurer::disable);
 
         return http.build();
+    }
+
+    /**
+     * CORS policy: allow the Vite dev-server to call the backend.
+     * In production, replace "http://localhost:5173" with the real frontend domain.
+     */
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(List.of("http://localhost:5173"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        config.setAllowedHeaders(List.of("*"));
+        config.setAllowCredentials(true);
+        config.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
     }
 
     /**

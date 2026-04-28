@@ -3,6 +3,7 @@ import AdminLayout from '../components/layouts/AdminLayout'
 import DashboardLayout from '../components/layouts/DashboardLayout'
 import PublicLayout from '../components/layouts/PublicLayout'
 import AdminRoute from '../components/routing/AdminRoute'
+import ProtectedRoute from '../components/routing/ProtectedRoute'
 import AboutUsPage from '../pages/about/AboutUsPage'
 import AdminOverviewPage from '../pages/admin/AdminOverviewPage'
 import AdminAddFacilityPage from '../pages/admin/AdminAddFacilityPage'
@@ -27,20 +28,34 @@ import UnauthorizedPage from '../pages/common/UnauthorizedPage'
 export default function AppRouter() {
   return (
     <Routes>
+      {/* OAuth2 callback — bare, no layout, no auth check */}
+      <Route path="/oauth2/redirect" element={<AuthCallbackPage />} />
+
+      {/* Fully public routes — no login required */}
       <Route element={<PublicLayout />}>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/oauth2/redirect" element={<AuthCallbackPage />} />
-        <Route path="/facility-portal" element={<FacilityPortalPage />} />
-        <Route path="/ticketing" element={<TicketingPage />} />
-        <Route path="/booking" element={<BookingPage />} />
-        <Route path="/contact-us" element={<ContactUsPage />} />
-        <Route path="/about-us" element={<AboutUsPage />} />
-        <Route path="/notifications" element={<NotificationsPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/" element={<LoginPage />} />
         <Route path="/unauthorized" element={<UnauthorizedPage />} />
       </Route>
 
+      {/* Protected routes — requires any authenticated user */}
+      <Route element={<ProtectedRoute />}>
+        <Route element={<PublicLayout />}>
+          <Route path="/home" element={<HomePage />} />
+          <Route path="/facility-portal" element={<FacilityPortalPage />} />
+          <Route path="/ticketing" element={<TicketingPage />} />
+          <Route path="/booking" element={<BookingPage />} />
+          <Route path="/contact-us" element={<ContactUsPage />} />
+          <Route path="/about-us" element={<AboutUsPage />} />
+          <Route path="/notifications" element={<NotificationsPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+        </Route>
+
+        <Route element={<DashboardLayout />}>
+          <Route path="/dashboard" element={<DashboardHomePage />} />
+        </Route>
+      </Route>
+
+      {/* Admin-only routes — requires ROLE_ADMIN */}
       <Route element={<AdminRoute />}>
         <Route element={<AdminLayout />}>
           <Route path="/admin" element={<AdminOverviewPage />} />
@@ -56,15 +71,7 @@ export default function AppRouter() {
         </Route>
       </Route>
 
-      <Route element={<DashboardLayout />}>
-        <Route path="/dashboard" element={<DashboardHomePage />} />
-      </Route>
-
-      <Route path="/dashboard/home" element={<Navigate to="/admin" replace />} />
-
-      <Route path="/home" element={<Navigate to="/" replace />} />
-
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
   )
-}
+}
