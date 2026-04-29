@@ -63,6 +63,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/user/**").permitAll()
                 .requestMatchers("/api/notifications/**").permitAll()
                 // All other endpoints require a valid JWT (enforced elsewhere)
+                .requestMatchers("/api/bookings/**").permitAll()
                 .anyRequest().authenticated()
             )
 
@@ -103,14 +104,19 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of(
                 "http://localhost:5173",
+                "http://localhost:5174",
                 "http://127.0.0.1:5173",
+                "http://127.0.0.1:5174",
                 "http://localhost:4173"
         ));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        // Allow CORS for all API endpoints used by the frontend (enables preflight responses)
+        source.registerCorsConfiguration("/api/**", configuration);
+        // Keep the specific facilities path for backward-compatibility if needed
         source.registerCorsConfiguration("/api/facilities/**", configuration);
         return source;
     }*/
