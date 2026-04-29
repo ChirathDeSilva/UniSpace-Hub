@@ -18,12 +18,16 @@ import DashboardHomePage from '../pages/dashboard/DashboardHomePage'
 import FacilityPortalPage from '../pages/facilityPortal/FacilityPortalPage'
 import HomePage from '../pages/home/HomePage'
 import LoginPage from '../pages/auth/LoginPage'
+import AdminLoginPage from '../pages/auth/AdminLoginPage'
+import TechnicianLoginPage from '../pages/auth/TechnicianLoginPage'
 import AuthCallbackPage from '../pages/auth/AuthCallbackPage'
 import NotFoundPage from '../pages/common/NotFoundPage'
 import NotificationsPage from '../pages/notifications/NotificationsPage'
 import ProfilePage from '../pages/profile/ProfilePage'
 import TicketingPage from '../pages/ticketing/TicketingPage'
 import UnauthorizedPage from '../pages/common/UnauthorizedPage'
+import TicketDetailsPage from '../pages/ticketing/TicketDetailsPage'
+import TechnicianTicketsPage from '../pages/ticketing/TechnicianTicketsPage'
 
 export default function AppRouter() {
   return (
@@ -31,11 +35,12 @@ export default function AppRouter() {
       {/* OAuth2 callback — bare, no layout, no auth check */}
       <Route path="/oauth2/redirect" element={<AuthCallbackPage />} />
 
-      {/* Fully public routes — no login required */}
-      <Route element={<PublicLayout />}>
-        <Route path="/" element={<LoginPage />} />
-        <Route path="/unauthorized" element={<UnauthorizedPage />} />
-      </Route>
+      {/* ── Standalone auth pages (no navbar/footer) ── */}
+      <Route path="/"            element={<LoginPage />} />
+      <Route path="/staff-login" element={<TechnicianLoginPage />} />
+      {/* /admin-login is intentionally unlisted — accessible by direct URL only */}
+      <Route path="/admin-login" element={<AdminLoginPage />} />
+      <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
       {/* Protected routes — requires any authenticated user */}
       <Route element={<ProtectedRoute />}>
@@ -48,6 +53,7 @@ export default function AppRouter() {
           <Route path="/about-us" element={<AboutUsPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/technician/tickets" element={<TechnicianTicketsPage />} />
         </Route>
 
         <Route element={<DashboardLayout />}>

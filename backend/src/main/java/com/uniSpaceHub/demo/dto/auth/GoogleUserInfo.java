@@ -5,6 +5,7 @@ import lombok.Data;
 
 @Data
 public class GoogleUserInfo {
+    @JsonProperty("sub")
     private String id;
     private String email;
     

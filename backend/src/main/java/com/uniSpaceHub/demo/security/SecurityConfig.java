@@ -59,6 +59,9 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll()
                 // Facility CRUD is used directly by the public facility pages.
                 .requestMatchers("/api/facilities/**").permitAll()
+                // User profile + notification endpoints validate JWTs manually in controllers
+                .requestMatchers("/api/user/**").permitAll()
+                .requestMatchers("/api/notifications/**").permitAll()
                 // All other endpoints require a valid JWT (enforced elsewhere)
                 .anyRequest().authenticated()
             )
@@ -95,7 +98,7 @@ public class SecurityConfig {
      * Used by AuthController to verify hashed passwords for Admin and Technician logins.
      * Strength factor 12 is a good balance of security vs. performance.
      */
-    @Bean
+    /*@Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of(
@@ -110,7 +113,7 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/api/facilities/**", configuration);
         return source;
-    }
+    }*/
 
     @Bean
     public PasswordEncoder passwordEncoder() {

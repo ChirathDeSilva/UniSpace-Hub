@@ -12,4 +12,13 @@ import com.uniSpaceHub.demo.model.UserRole;
 public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByEmail(String email);
     List<User> findByRole_NameIn(List<UserRole> roles);
+
+    /** Find by the Microsoft-specific email stored at first MS OAuth login. */
+    Optional<User> findByMicrosoftEmail(String microsoftEmail);
+
+    /** Find by the Microsoft OID (object ID from Microsoft Graph). */
+    Optional<User> findByMicrosoftProviderId(String microsoftProviderId);
+
+    /** Find by Google OAuth sub/id. */
+    Optional<User> findByProviderId(String providerId);
 }

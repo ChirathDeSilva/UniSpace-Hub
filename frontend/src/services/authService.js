@@ -1,18 +1,51 @@
 import httpClient from '../api/httpClient'
 
+/**
+ * Student credential login → POST /api/auth/studentlogin
+ */
+export async function studentLogin(credentials) {
+  const res = await httpClient.post('/api/auth/studentlogin', credentials)
+  return res.data
+}
+
+/**
+ * Lecturer credential login → POST /api/auth/lecturerlogin
+ */
+export async function lecturerLogin(credentials) {
+  const res = await httpClient.post('/api/auth/lecturerlogin', credentials)
+  return res.data
+}
+
+/**
+ * Admin credential login → POST /api/auth/adminlogin
+ */
+export async function adminLogin(credentials) {
+  const res = await httpClient.post('/api/auth/adminlogin', credentials)
+  return res.data
+}
+
+/**
+ * Technician credential login → POST /api/auth/technicianlogin
+ */
+export async function technicianLogin(credentials) {
+  const res = await httpClient.post('/api/auth/technicianlogin', credentials)
+  return res.data
+}
+
+/**
+ * Legacy unified login kept for compatibility.
+ */
 export async function login(credentials, role) {
-  const endpointMap = {
-    'Admin': '/api/auth/adminlogin',
-    'Technician': '/api/auth/technicianlogin',
-    'Student': '/api/auth/studentlogin',
-    'Lecturer': '/api/auth/lecturerlogin',
+  const map = {
+    Student:    studentLogin,
+    Lecturer:   lecturerLogin,
+    Admin:      adminLogin,
+    Technician: technicianLogin,
   }
-  const endpoint = endpointMap[role] || '/api/auth/studentlogin'
-  const response = await httpClient.post(endpoint, credentials)
-  return response.data
+  return (map[role] || studentLogin)(credentials)
 }
 
 export async function getProfile() {
-  const response = await httpClient.get('/api/users/me')
-  return response.data
+  const res = await httpClient.get('/api/user/me')
+  return res.data
 }

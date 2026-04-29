@@ -26,7 +26,7 @@ export const categories = ['IT Issue', 'Facility', 'Academic', 'Other']
 
 export const currentUser = {
   id: 'STU-2026-009',
-  name: 'Ishoda Senarath',
+  name: 'Gayan chinthaka',
   role: 'student',
 }
 
