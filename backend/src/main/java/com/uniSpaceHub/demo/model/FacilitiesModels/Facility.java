@@ -3,24 +3,19 @@ package com.uniSpaceHub.demo.model.FacilitiesModels;
 import jakarta.persistence.*;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.uniSpaceHub.demo.model.FacilityStatus;
-import java.time.LocalTime;
 import com.uniSpaceHub.demo.model.FacilityType;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
-@JsonTypeInfo(
-    use = JsonTypeInfo.Id.NAME,
-    include = JsonTypeInfo.As.PROPERTY,
-    property = "facilityType"
-)
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "facilityType")
 @JsonSubTypes({
-    @JsonSubTypes.Type(value = LectureHall.class, name = "lectureHall"),
-    @JsonSubTypes.Type(value = Lab.class, name = "lab"),
-    @JsonSubTypes.Type(value = ConferenceRoom.class, name = "conferenceRoom"),
-    @JsonSubTypes.Type(value = SportArea.class, name = "sportArea"),
-    @JsonSubTypes.Type(value = Equipment.class, name = "equipment"),
-    @JsonSubTypes.Type(value = Auditorium.class, name = "auditorium")
+        @JsonSubTypes.Type(value = LectureHall.class, name = "lectureHall"),
+        @JsonSubTypes.Type(value = Lab.class, name = "lab"),
+        @JsonSubTypes.Type(value = ConferenceRoom.class, name = "conferenceRoom"),
+        @JsonSubTypes.Type(value = SportArea.class, name = "sportArea"),
+        @JsonSubTypes.Type(value = Equipment.class, name = "equipment"),
+        @JsonSubTypes.Type(value = Auditorium.class, name = "auditorium")
 })
 public abstract class Facility {
 
@@ -38,28 +33,43 @@ public abstract class Facility {
     private FacilityStatus status;
 
     // Getters and setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Long getId() {
+        return id;
+    }
 
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public String getLocation() { return location; }
-    public void setLocation(String location) { this.location = location; }
+    public String getName() {
+        return name;
+    }
 
-    public FacilityType getType() { return type; }
-    public void setType(FacilityType type) { this.type = type; }
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
+    }
+
+    public FacilityType getType() {
+        return type;
+    }
+
+    public void setType(FacilityType type) {
+        this.type = type;
+    }
 
     public FacilityStatus getStatus() {
-        LocalTime now = LocalTime.now();
-        LocalTime nightStart = LocalTime.of(20, 30); // 8:30 PM
-        LocalTime nightEnd = LocalTime.of(8, 30);   // 8:30 AM
-        // If current time is >= 20:30 or < 08:30, treat as NOT_IN_SERVICE
-        if (!now.isBefore(nightStart) || now.isBefore(nightEnd)) {
-            return FacilityStatus.NOT_IN_SERVICE;
-        }
         return status;
     }
 
-    public void setStatus(FacilityStatus status) { this.status = status; }
+    public void setStatus(FacilityStatus status) {
+        this.status = status;
+    }
 }

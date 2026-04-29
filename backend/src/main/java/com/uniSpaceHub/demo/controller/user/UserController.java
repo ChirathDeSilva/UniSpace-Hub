@@ -24,7 +24,8 @@ public class UserController {
     private final UserRepository userRepository;
 
     @GetMapping("/me")
-    public ResponseEntity<?> getCurrentUser(@RequestHeader(value = "Authorization", required = false) String authHeader) {
+    public ResponseEntity<?> getCurrentUser(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Missing or invalid Authorization header");
         }
@@ -40,6 +41,8 @@ public class UserController {
             }
 
             Map<String, Object> profile = new HashMap<>();
+            profile.put("id", user.getId());
+            profile.put("userId", user.getId());
             profile.put("name", user.getFullName());
             profile.put("email", user.getEmail());
             profile.put("role", user.getRole() != null ? user.getRole().getName().name() : null);

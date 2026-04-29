@@ -79,4 +79,9 @@ public class TicketController {
     public Ticket cancel(@PathVariable Long id, @Valid @RequestBody CancelTicketRequest request) {
         return ticketService.cancelTicketByOwner(id, request.getUserId());
     }
+
+    @DeleteMapping("/{id}")
+    public void delete(@PathVariable Long id) {
+        ticketService.deleteTicket(id);
+    }
 }
