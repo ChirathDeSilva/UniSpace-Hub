@@ -60,6 +60,12 @@ function validate(formData, detailData) {
     if (availableSeats > totalSeats) {
       nextErrors['detail.availableSeats'] = 'Available seats cannot exceed total seats.'
     }
+    if (totalSeats > 250) {
+      nextErrors['detail.totalSeats'] = 'Total seats cannot exceed 250.'
+    }
+    if (availableSeats > 250) {
+      nextErrors['detail.availableSeats'] = 'Available seats cannot exceed 250.'
+    }
   }
 
   const totalQuantity = Number.parseInt(detailData.totalQuantity, 10)
@@ -72,6 +78,14 @@ function validate(formData, detailData) {
     if (availableQuantity > totalQuantity) {
       nextErrors['detail.availableQuantity'] =
         'Available quantity cannot exceed total quantity.'
+    }
+  }
+
+  // Lab capacity maximum
+  if (formData.type === 'LAB') {
+    const labCapacity = Number.parseInt(detailData.capacity, 10)
+    if (Number.isFinite(labCapacity) && labCapacity > 60) {
+      nextErrors['detail.capacity'] = 'Lab capacity cannot exceed 60.'
     }
   }
 

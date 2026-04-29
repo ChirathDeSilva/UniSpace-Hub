@@ -1,0 +1,238 @@
+.adb-page {
+  min-height: 100%;
+  background: #0b1220;
+  padding: 24px;
+  color: #e5e7eb;
+}
+
+.adb-container {
+  max-width: 1320px;
+  margin: 0 auto;
+}
+
+.adb-header {
+  margin-bottom: 16px;
+}
+
+.adb-kicker {
+  margin: 0 0 6px;
+  color: #93c5fd;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+}
+
+.adb-header h1 {
+  margin: 0;
+  font-size: 30px;
+}
+
+.adb-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.adb-stat-card {
+  background: #111a2e;
+  border: 1px solid #25304a;
+  border-radius: 10px;
+  padding: 14px;
+}
+
+.adb-stat-value {
+  font-size: 26px;
+  font-weight: 900;
+  color: #f8fafc;
+}
+
+.adb-stat-label {
+  color: #9ca3af;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.adb-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.adb-filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.adb-filter-btn,
+.adb-pagination button,
+.adb-link {
+  border: 1px solid #42547a;
+  background: #1b2a47;
+  color: #fff;
+  border-radius: 6px;
+  padding: 8px 10px;
+  text-decoration: none;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.adb-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 280px;
+  background: #0d1425;
+  border: 1px solid #3b4a6b;
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.adb-search input {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  color: #eef2ff;
+  outline: none;
+}
+
+.adb-message {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #0d1425;
+  border: 1px solid #25304a;
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 16px;
+}
+
+.adb-message-error {
+  background: #1f0d14;
+  border-color: #7f1d1d;
+  color: #fecaca;
+}
+
+.adb-table-wrap {
+  background: #111a2e;
+  border: 1px solid #25304a;
+  border-radius: 10px;
+  padding: 14px;
+  overflow: auto;
+}
+
+.adb-results-summary {
+  margin-bottom: 12px;
+  color: #9ca3af;
+  font-size: 12px;
+}
+
+.adb-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 980px;
+}
+
+.adb-table th,
+.adb-table td {
+  padding: 12px 10px;
+  border-bottom: 1px solid #25304a;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.adb-table th {
+  color: #9ca3af;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+.adb-empty {
+  text-align: center;
+  color: #9ca3af;
+  padding: 24px 10px;
+}
+
+.adb-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 84px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.adb-PENDING {
+  background: #3b2f0d;
+  color: #fcd34d;
+}
+
+.adb-APPROVED {
+  background: #0d2f22;
+  color: #6ee7b7;
+}
+
+.adb-REJECTED {
+  background: #33101b;
+  color: #fca5a5;
+}
+
+.adb-CANCELLED {
+  background: #1f2937;
+  color: #d1d5db;
+}
+
+.adb-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.adb-highlight {
+  background: rgba(37, 99, 235, 0.12);
+}
+
+.adb-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.adb-pagination button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+@media (max-width: 960px) {
+  .adb-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .adb-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .adb-toolbar {
+    align-items: stretch;
+  }
+
+  .adb-search {
+    min-width: 0;
+    width: 100%;
+  }
+}

@@ -1,0 +1,256 @@
+.verify-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: #0b1120;
+  position: relative;
+  overflow: hidden;
+  color: #111827;
+}
+
+.verify-glow {
+  position: absolute;
+  width: 50vw;
+  height: 50vw;
+  border-radius: 999px;
+  filter: blur(120px);
+  pointer-events: none;
+  opacity: 0.22;
+}
+
+.verify-glow-left {
+  left: -12vw;
+  bottom: -18vw;
+  background: #4f46e5;
+}
+
+.verify-glow-right {
+  right: -12vw;
+  top: -18vw;
+  background: #2563eb;
+}
+
+.verify-card {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 560px);
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+
+.verify-header {
+  padding: 44px 28px;
+  text-align: center;
+  color: #fff;
+}
+
+.verify-header h1 {
+  margin: 14px 0 6px;
+  font-size: 28px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+.verify-header p {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  opacity: 0.85;
+}
+
+.verify-loading {
+  background: #1f2937;
+}
+
+.verify-success {
+  background: #10b981;
+}
+
+.verify-error {
+  background: #e11d48;
+}
+
+.verify-status-icon {
+  font-size: 64px;
+}
+
+.verify-spinner {
+  width: 64px;
+  height: 64px;
+  border-radius: 999px;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  margin: 0 auto 16px;
+  animation: verify-spin 1s linear infinite;
+}
+
+@keyframes verify-spin {
+  to { transform: rotate(360deg); }
+}
+
+.verify-body,
+.verify-error-body {
+  padding: 28px;
+}
+
+.verify-panel,
+.verify-box,
+.verify-time,
+.verify-purpose {
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.verify-label,
+.verify-subtitle {
+  margin: 0 0 8px;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: #6b7280;
+}
+
+.verify-panel h2,
+.verify-box p,
+.verify-purpose p,
+.verify-time-row span {
+  margin: 0;
+}
+
+.verify-panel h2 {
+  font-size: 22px;
+  font-weight: 900;
+  color: #1f2937;
+}
+
+.verify-mono {
+  margin-top: 6px;
+  color: #4338ca;
+  font-family: monospace;
+  font-weight: 700;
+}
+
+.verify-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.verify-venue {
+  grid-column: 1 / -1;
+  background: #111827;
+  color: #fff;
+}
+
+.verify-venue .verify-subtitle {
+  color: #c7d2fe;
+}
+
+.verify-venue p:last-child {
+  font-size: 20px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.verify-box p:last-child {
+  font-size: 18px;
+  font-weight: 900;
+  color: #1f2937;
+}
+
+.verify-box span {
+  font-size: 10px;
+  color: #9ca3af;
+  font-weight: 700;
+}
+
+.verify-time {
+  background: #4f46e5;
+  color: #fff;
+}
+
+.verify-time .verify-subtitle {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.verify-time-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 28px;
+  font-weight: 900;
+}
+
+.verify-purpose p:last-child,
+.verify-error-body p {
+  color: #374151;
+  line-height: 1.7;
+  margin: 0;
+}
+
+.verify-link-btn {
+  display: inline-block;
+  margin-top: 18px;
+  background: #e11d48;
+  color: #fff;
+  text-decoration: none;
+  padding: 10px 16px;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+.verify-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 20px;
+  border-top: 1px solid #e5e7eb;
+  background: #f8fafc;
+  color: #6b7280;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+}
+
+.verify-exit-link {
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  color: rgba(255, 255, 255, 0.35);
+  text-decoration: none;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+}
+
+@media (max-width: 640px) {
+  .verify-header h1 {
+    font-size: 22px;
+  }
+
+  .verify-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .verify-time-row {
+    font-size: 22px;
+    flex-wrap: wrap;
+  }
+}

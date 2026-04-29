@@ -1,0 +1,154 @@
+.abr-page {
+  min-height: 100%;
+  background: #0b1220;
+  padding: 24px;
+}
+
+.abr-container {
+  max-width: 920px;
+  margin: 0 auto;
+}
+
+.abr-card {
+  background: #111a2e;
+  border: 1px solid #25304a;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  color: #e9edf7;
+}
+
+.abr-card h2,
+.abr-card h3 {
+  margin: 0 0 12px;
+}
+
+.abr-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.abr-grid strong {
+  display: block;
+  font-size: 12px;
+  color: #a8b4cf;
+  margin-bottom: 4px;
+}
+
+.abr-grid p,
+.abr-purpose p {
+  margin: 0;
+}
+
+.abr-purpose {
+  border-top: 1px solid #25304a;
+  padding-top: 10px;
+}
+
+.abr-purpose strong {
+  display: block;
+  margin-bottom: 6px;
+  color: #a8b4cf;
+  font-size: 12px;
+}
+
+.abr-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+  color: #b8c8ff;
+  text-decoration: none;
+}
+
+.abr-center {
+  text-align: center;
+}
+
+.abr-error {
+  color: #ffd3d3;
+}
+
+.abr-warning {
+  border-color: #7c3b3b;
+}
+
+.abr-muted {
+  border-color: #475569;
+}
+
+.abr-success {
+  border-color: #246b4f;
+}
+
+.abr-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-top: 1px solid #25304a;
+}
+
+.abr-row:first-of-type {
+  border-top: 0;
+}
+
+.abr-textarea {
+  width: 100%;
+  min-height: 96px;
+  resize: vertical;
+  border: 1px solid #3b4a6b;
+  border-radius: 6px;
+  background: #0d1425;
+  color: #ecf2ff;
+  padding: 10px;
+}
+
+.abr-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.abr-btn,
+.abr-link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #42547a;
+  background: #1b2a47;
+  color: #ffffff;
+  border-radius: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.abr-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.abr-btn-success {
+  background: #1f6a46;
+  border-color: #2b8f61;
+}
+
+.abr-btn-danger {
+  background: #7e2f2f;
+  border-color: #a84a4a;
+}
+
+.abr-error-text {
+  color: #ffb4b4;
+  margin: 8px 0 0;
+}
+
+.abr-note {
+  margin-top: 8px;
+  color: #ffd6a0;
+  font-size: 13px;
+}

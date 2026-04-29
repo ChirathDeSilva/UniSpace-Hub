@@ -13,9 +13,6 @@ import com.uniSpaceHub.demo.repository.booking.BookingCheckInRepository;
 import com.uniSpaceHub.demo.repository.booking.BookingRepository;
 import com.uniSpaceHub.demo.repository.booking.BookingStatusHistoryRepository;
 import com.uniSpaceHub.demo.service.AdminBookingService;
-import com.uniSpaceHub.demo.service.NotificationService;
-import com.uniSpaceHub.demo.model.NotificationType;
-import com.uniSpaceHub.demo.model.NotificationSeverity;
 
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
@@ -60,7 +57,6 @@ public class AdminBookingServiceImpl implements AdminBookingService {
     private final BookingRepository bookingRepository;
     private final BookingStatusHistoryRepository historyRepository;
     private final BookingCheckInRepository checkInRepository;
-    private final NotificationService notificationService;
 
     @Override
     @Transactional(readOnly = true)
@@ -152,9 +148,6 @@ public class AdminBookingServiceImpl implements AdminBookingService {
         recordHistory(saved.getId(), oldStatus, BookingStatus.APPROVED, request.getApprovedBy(),
                 request.getAdminDecisionReason());
 
-        String msg = "Success! Your booking for " + saved.getBookingDate() + " is approved.";
-        notificationService.createNotification(saved.getUser(), msg, NotificationType.BOOKING, NotificationSeverity.SUCCESS, saved.getId().toString());
-
         return mapToResponse(saved);
     }
 
@@ -181,9 +174,6 @@ public class AdminBookingServiceImpl implements AdminBookingService {
 
         recordHistory(saved.getId(), oldStatus, BookingStatus.REJECTED, request.getRejectedBy(),
                 request.getAdminDecisionReason());
-
-        String msg = "your booking is rejected";
-        notificationService.createNotification(saved.getUser(), msg, NotificationType.BOOKING, NotificationSeverity.ERROR, saved.getId().toString());
 
         return mapToResponse(saved);
     }
