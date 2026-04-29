@@ -36,6 +36,39 @@ const normalizeBooking = (booking) => {
   };
 };
 
+const mergeBookings = (apiList, cachedList) => {
+  const map = {};
+  (apiList || []).forEach((b) => {
+    const code = String(b.bookingCode || b.id || '');
+    if (!code) return;
+    map[code] = b;
+  });
+
+  (cachedList || []).forEach((cb) => {
+    const code = String(cb.bookingCode || cb.id || '');
+    if (!code) return;
+    const existing = map[code];
+    if (!existing) {
+      map[code] = cb;
+      return;
+    }
+
+    const apiUpdated = existing.updatedAt ? Date.parse(existing.updatedAt) : 0;
+    const cachedUpdated = cb.updatedAt ? Date.parse(cb.updatedAt) : 0;
+
+    // Prefer cached record if it's newer or contains a local decision
+    if (cachedUpdated > apiUpdated) {
+      map[code] = cb;
+    } else if (!existing.updatedAt && cb.updatedAt) {
+      map[code] = cb;
+    } else if ((cb.status && cb.status !== existing.status) && cb.updatedAt) {
+      map[code] = cb;
+    }
+  });
+
+  return Object.values(map).map(normalizeBooking);
+};
+
 const toResourcesMap = (resources) => {
   const map = {};
   resources.forEach((resource) => {
@@ -102,9 +135,12 @@ export function useBookings() {
           ? bookingsResult.data.map(normalizeBooking)
           : [];
 
-        console.log('[useBookings] Normalized bookings:', bookingsData);
-        setBookings(bookingsData);
-        writeBookingsCache(bookingsData);
+        // Merge API bookings with any local demo cache overrides so local approvals/rejections persist
+        const cachedBookings = readBookingsCache();
+        const merged = mergeBookings(bookingsData, cachedBookings);
+        console.log('[useBookings] Normalized bookings (merged):', merged);
+        setBookings(merged);
+        writeBookingsCache(merged);
       }
 
       if (!resourcesResult?.error) {

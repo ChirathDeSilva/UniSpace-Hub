@@ -24,6 +24,38 @@ const normalizeBooking = (booking) => {
   };
 };
 
+const mergeBookings = (apiList, cachedList) => {
+  const map = {};
+  (apiList || []).forEach((b) => {
+    const code = String(b.bookingCode || b.id || '');
+    if (!code) return;
+    map[code] = b;
+  });
+
+  (cachedList || []).forEach((cb) => {
+    const code = String(cb.bookingCode || cb.id || '');
+    if (!code) return;
+    const existing = map[code];
+    if (!existing) {
+      map[code] = cb;
+      return;
+    }
+
+    const apiUpdated = existing.updatedAt ? Date.parse(existing.updatedAt) : 0;
+    const cachedUpdated = cb.updatedAt ? Date.parse(cb.updatedAt) : 0;
+
+    if (cachedUpdated > apiUpdated) {
+      map[code] = cb;
+    } else if (!existing.updatedAt && cb.updatedAt) {
+      map[code] = cb;
+    } else if ((cb.status && cb.status !== existing.status) && cb.updatedAt) {
+      map[code] = cb;
+    }
+  });
+
+  return Object.values(map).map(normalizeBooking);
+};
+
 export function useBookingDetail(bookingCode) {
   const [booking, setBooking] = useState(null);
   const [resourceDetails, setResourceDetails] = useState(null);
@@ -41,9 +73,11 @@ export function useBookingDetail(bookingCode) {
         fetchAllResources(),
       ]);
 
-      const bookingsData = Array.isArray(bookingsResult?.data)
+      const apiList = Array.isArray(bookingsResult?.data)
         ? bookingsResult.data.map(normalizeBooking)
-        : readBookingsCache().map(normalizeBooking);
+        : [];
+      const cached = readBookingsCache().map(normalizeBooking);
+      const bookingsData = mergeBookings(apiList, cached);
 
       const current = bookingsData.find((b) => String(b.bookingCode) === String(bookingCode));
 
