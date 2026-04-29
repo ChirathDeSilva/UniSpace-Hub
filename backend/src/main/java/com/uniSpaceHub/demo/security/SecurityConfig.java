@@ -2,6 +2,7 @@ package com.uniSpaceHub.demo.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -26,15 +27,22 @@ import java.util.List;
  *   even a request to /api/auth/microsoft/login — before the controller runs.
  * - This config disables that auto-redirect and opens /api/auth/** so our
  *   AuthController can handle both Google and Microsoft flows manually.
+ * - CORS is configured to allow the Vite dev server (port 5173) to make
+ *   cross-origin requests to this backend (port 8081).
  */
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity   // enables @PreAuthorize on controller methods
 public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, CorsConfigurationSource corsConfigurationSource) throws Exception {
         http
-            .cors(cors -> cors.configurationSource(corsConfigurationSource))
+            // ── CORS ──────────────────────────────────────────────────────────
+            // Must be enabled BEFORE csrf so that Spring Security uses our
+            // CorsConfigurationSource bean to resolve pre-flight OPTIONS requests.
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+
             // ── CSRF ──────────────────────────────────────────────────────────
             // Disabled for stateless REST API (JWT-based, no session cookies).
             .csrf(AbstractHttpConfigurer::disable)
@@ -51,6 +59,9 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll()
                 // Facility CRUD is used directly by the public facility pages.
                 .requestMatchers("/api/facilities/**").permitAll()
+                // User profile + notification endpoints validate JWTs manually in controllers
+                .requestMatchers("/api/user/**").permitAll()
+                .requestMatchers("/api/notifications/**").permitAll()
                 // All other endpoints require a valid JWT (enforced elsewhere)
                 .requestMatchers("/api/bookings/**").permitAll()
                 .anyRequest().authenticated()
@@ -66,11 +77,29 @@ public class SecurityConfig {
     }
 
     /**
+     * CORS policy: allow the Vite dev-server to call the backend.
+     * In production, replace "http://localhost:5173" with the real frontend domain.
+     */
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(List.of("http://localhost:5173"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        config.setAllowedHeaders(List.of("*"));
+        config.setAllowCredentials(true);
+        config.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
+    }
+
+    /**
      * BCrypt password encoder bean.
      * Used by AuthController to verify hashed passwords for Admin and Technician logins.
      * Strength factor 12 is a good balance of security vs. performance.
      */
-    @Bean
+    /*@Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of(
@@ -90,7 +119,7 @@ public class SecurityConfig {
         // Keep the specific facilities path for backward-compatibility if needed
         source.registerCorsConfiguration("/api/facilities/**", configuration);
         return source;
-    }
+    }*/
 
     @Bean
     public PasswordEncoder passwordEncoder() {

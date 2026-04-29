@@ -4,6 +4,7 @@ import useAuth from '../../hooks/useAuth'
 
 const adminNavItems = [
   { to: '/admin', label: 'Dashboard' },
+  { to: '/admin/sla-dashboard', label: 'SLA Dashboard' },
   { to: '/admin/add-facility', label: 'Add Facility' },
   { to: '/admin/facility-list', label: 'Facility List' },
   { to: '/admin/ticket-handling', label: 'Ticket Handling' },

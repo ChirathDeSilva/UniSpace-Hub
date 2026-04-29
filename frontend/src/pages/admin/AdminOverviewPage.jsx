@@ -4,6 +4,11 @@ import Button from '../../components/ui/Button'
 
 const dashboardActions = [
   {
+    title: 'SLA Dashboard',
+    description: 'Monitor SLA risk and breach alerts in real time.',
+    to: '/admin/sla-dashboard',
+  },
+  {
     title: 'Add Facility',
     description: 'Create and configure a new facility record.',
     to: '/admin/add-facility',
@@ -24,9 +29,9 @@ const dashboardActions = [
     to: '/admin/booking-handling',
   },
   {
-    title: 'Logging Handling',
-    description: 'Inspect platform logs and monitor administrative actions.',
-    to: '/admin/logging-handling',
+    title: 'User Management',
+    description: 'Manage users, assign roles, and remove accounts.',
+    to: '/admin/users',
   },
 ]
 

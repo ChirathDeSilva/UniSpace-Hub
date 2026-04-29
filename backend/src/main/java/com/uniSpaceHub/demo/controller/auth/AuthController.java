@@ -51,10 +51,10 @@ public class AuthController {
 
     // ─── Shared frontend redirect URLs ───────────────────────────────────────
 
-    @Value("${app.frontend.success-url:http://localhost:3000/oauth2/redirect}")
+    @Value("${app.frontend.success-url:http://localhost:5173/oauth2/redirect}")
     private String frontendSuccessUrl;
 
-    @Value("${app.frontend.error-url:http://localhost:3000/login?error=access_denied}")
+    @Value("${app.frontend.error-url:http://localhost:5173/?error=access_denied}")
     private String frontendErrorUrl;
 
     @Autowired
@@ -143,23 +143,30 @@ public class AuthController {
             }
 
             GoogleUserInfo googleUserInfo = userInfoResponse.getBody();
-            String email = googleUserInfo.getEmail();
+            String googleSub  = googleUserInfo.getId();   // Google's unique identifier
+            String email      = googleUserInfo.getEmail();
 
-            // 3. Validate user exists in DB
-            Optional<User> userOptional = userRepository.findByEmail(email);
+            // 3. Find the user — try Google sub first (fastest), then email
+            Optional<User> userOptional = userRepository.findByProviderId(googleSub);
             if (userOptional.isEmpty()) {
-                return new RedirectView(frontendErrorUrl);
+                userOptional = userRepository.findByEmail(email);
+            }
+            if (userOptional.isEmpty()) {
+                // User not pre-registered in the system
+                return new RedirectView(frontendErrorUrl + "&reason=not_registered");
             }
 
             User user = userOptional.get();
 
-            // 4. Update provider info and last-login timestamp
-            user.setProviderId(googleUserInfo.getId());
+            // 4. Update Google provider info + profile fields
+            user.setProviderId(googleSub);
             user.setLastLogin(LocalDateTime.now());
 
-            boolean isFirstTime = (user.getFullName() == null || user.getFullName().trim().isEmpty());
-
-            if (user.getPictureUrl() == null) {
+            // Always sync name and avatar from Google (keep them fresh)
+            if (googleUserInfo.getName() != null && !googleUserInfo.getName().isBlank()) {
+                user.setFullName(googleUserInfo.getName());
+            }
+            if (googleUserInfo.getPicture() != null && !googleUserInfo.getPicture().isBlank()) {
                 user.setPictureUrl(googleUserInfo.getPicture());
             }
 
@@ -169,7 +176,7 @@ public class AuthController {
 
             // 5. Generate JWT and redirect to frontend
             String jwtToken = jwtTokenProvider.generateToken(user);
-            String finalRedirectUrl = frontendSuccessUrl + "?token=" + jwtToken + "&isNew=" + isFirstTime;
+            String finalRedirectUrl = frontendSuccessUrl + "?token=" + jwtToken;
             return new RedirectView(finalRedirectUrl);
 
         } catch (Exception e) {
@@ -206,18 +213,34 @@ public class AuthController {
      * to the frontend — identical flow to the Google callback.
      */
     @GetMapping("/microsoft/callback")
-    public RedirectView microsoftCallback(@RequestParam("code") String code) {
+    public RedirectView microsoftCallback(
+            @RequestParam(value = "code", required = false) String code,
+            @RequestParam(value = "error", required = false) String error,
+            @RequestParam(value = "error_description", required = false) String errorDescription) {
+
+        // Microsoft sends error/error_description when the user denies consent
+        if (error != null) {
+            System.err.println("[MS OAuth] Error from Microsoft: " + error + " — " + errorDescription);
+            return new RedirectView(frontendErrorUrl + "&reason=" + error);
+        }
+
+        if (code == null || code.isBlank()) {
+            return new RedirectView(frontendErrorUrl + "&reason=missing_code");
+        }
+
         try {
             // 1. Exchange authorization code for access token
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
             MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-            params.add("client_id", microsoftClientId);
+            params.add("client_id",     microsoftClientId);
             params.add("client_secret", microsoftClientSecret);
-            params.add("code", code);
-            params.add("redirect_uri", microsoftRedirectUri);
-            params.add("grant_type", "authorization_code");
+            params.add("code",          code);
+            params.add("redirect_uri",  microsoftRedirectUri);
+            params.add("grant_type",    "authorization_code");
+            // Explicitly request the scopes — required for token endpoint
+            params.add("scope",         "openid email profile User.Read");
 
             HttpEntity<MultiValueMap<String, String>> tokenRequest = new HttpEntity<>(params, headers);
 
@@ -250,32 +273,50 @@ public class AuthController {
             }
 
             MicrosoftUserInfo msUserInfo = userInfoResponse.getBody();
+            String msOid   = msUserInfo.getId();       // Microsoft Object ID — unique and stable
+            String msEmail = msUserInfo.getEmail();    // mail ?? userPrincipalName
 
-            // getEmail() returns "mail" field; falls back to "userPrincipalName" if null
-            String email = msUserInfo.getEmail();
-
-            if (email == null || email.isBlank()) {
+            if (msEmail == null || msEmail.isBlank()) {
                 return new RedirectView(frontendErrorUrl + "&reason=email_not_available");
             }
 
-            // 3. Validate user exists in DB (same rule as Google – pre-registered only)
-            Optional<User> userOptional = userRepository.findByEmail(email);
+            // 3. Three-step account lookup — ensures the same DB record is found
+            //    regardless of whether the user previously logged in with Google or
+            //    was pre-registered with a different primary email:
+            //
+            //    Step A: Match by Microsoft OID (fastest — unique per account)
+            Optional<User> userOptional = userRepository.findByMicrosoftProviderId(msOid);
+
+            //    Step B: Match by the Microsoft email we stored previously
             if (userOptional.isEmpty()) {
-                return new RedirectView(frontendErrorUrl);
+                userOptional = userRepository.findByMicrosoftEmail(msEmail);
+            }
+
+            //    Step C: Match by the user's primary registered email
+            //            (handles the case where admin pre-registered with the MS email)
+            if (userOptional.isEmpty()) {
+                userOptional = userRepository.findByEmail(msEmail);
+            }
+
+            if (userOptional.isEmpty()) {
+                // User not pre-registered in the system
+                return new RedirectView(frontendErrorUrl + "&reason=not_registered");
             }
 
             User user = userOptional.get();
 
-            // 4. Update provider info and last-login timestamp
-            user.setProviderId(msUserInfo.getId());
+            // 4. Update Microsoft-specific provider fields (never touch Google's providerId)
+            user.setMicrosoftProviderId(msOid);
+            user.setMicrosoftEmail(msEmail);
             user.setLastLogin(LocalDateTime.now());
 
-            boolean isFirstTime = (user.getFullName() == null || user.getFullName().trim().isEmpty());
-
-            // Persist display name on first login if not already set
-            if (isFirstTime && msUserInfo.getDisplayName() != null) {
+            // Sync display name and avatar if not already set
+            if ((user.getFullName() == null || user.getFullName().isBlank())
+                    && msUserInfo.getDisplayName() != null && !msUserInfo.getDisplayName().isBlank()) {
                 user.setFullName(msUserInfo.getDisplayName());
             }
+            // Microsoft Graph does not serve profile photos via /me directly;
+            // pictureUrl is only set if user has a Google picture already.
 
             userRepository.save(user);
             notificationService.sendLoginAlert(user);
@@ -283,7 +324,7 @@ public class AuthController {
 
             // 5. Generate JWT and redirect to frontend
             String jwtToken = jwtTokenProvider.generateToken(user);
-            String finalRedirectUrl = frontendSuccessUrl + "?token=" + jwtToken + "&isNew=" + isFirstTime;
+            String finalRedirectUrl = frontendSuccessUrl + "?token=" + jwtToken;
             return new RedirectView(finalRedirectUrl);
 
         } catch (Exception e) {
@@ -361,6 +402,86 @@ public class AuthController {
             userRepository.save(user);
             notificationService.sendLoginAlert(user);
             loginAuditRepository.save(new com.uniSpaceHub.demo.model.audit.LoginAudit(user, LocalDateTime.now(), "TECHNICIAN_CREDENTIALS"));
+
+            String jwtToken = jwtTokenProvider.generateToken(user);
+
+            LoginResponse response = new LoginResponse(
+                    jwtToken,
+                    user.getEmail(),
+                    user.getFullName(),
+                    roleName.name()
+            );
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred during login");
+        }
+    }
+
+    @PostMapping("/studentlogin")
+    public ResponseEntity<?> studentLogin(@RequestBody LoginRequest loginRequest) {
+        try {
+            Optional<User> userOptional = userRepository.findByEmail(loginRequest.getEmail());
+            if (userOptional.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+            }
+
+            User user = userOptional.get();
+
+            UserRole roleName = user.getRole().getName();
+            if (roleName != UserRole.ROLE_STUDENT) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+            }
+
+            if (user.getPassword() == null || !passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+            }
+
+            user.setLastLogin(LocalDateTime.now());
+            userRepository.save(user);
+            notificationService.sendLoginAlert(user);
+            loginAuditRepository.save(new com.uniSpaceHub.demo.model.audit.LoginAudit(user, LocalDateTime.now(), "STUDENT_CREDENTIALS"));
+
+            String jwtToken = jwtTokenProvider.generateToken(user);
+
+            LoginResponse response = new LoginResponse(
+                    jwtToken,
+                    user.getEmail(),
+                    user.getFullName(),
+                    roleName.name()
+            );
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred during login");
+        }
+    }
+
+    @PostMapping("/lecturerlogin")
+    public ResponseEntity<?> lecturerLogin(@RequestBody LoginRequest loginRequest) {
+        try {
+            Optional<User> userOptional = userRepository.findByEmail(loginRequest.getEmail());
+            if (userOptional.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+            }
+
+            User user = userOptional.get();
+
+            UserRole roleName = user.getRole().getName();
+            if (roleName != UserRole.ROLE_LECTURER) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+            }
+
+            if (user.getPassword() == null || !passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+            }
+
+            user.setLastLogin(LocalDateTime.now());
+            userRepository.save(user);
+            notificationService.sendLoginAlert(user);
+            loginAuditRepository.save(new com.uniSpaceHub.demo.model.audit.LoginAudit(user, LocalDateTime.now(), "LECTURER_CREDENTIALS"));
 
             String jwtToken = jwtTokenProvider.generateToken(user);
 

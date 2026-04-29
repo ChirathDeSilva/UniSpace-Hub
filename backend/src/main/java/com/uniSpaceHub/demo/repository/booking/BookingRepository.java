@@ -20,6 +20,9 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, JpaSpec
     // Find bookings by user
     List<Booking> findByUserId(Long userId);
 
+    // Find 5 most recent bookings for a user (profile page — Space Usage Summary)
+    List<Booking> findTop5ByUserIdOrderByCreatedAtDesc(Long userId);
+
     // Find bookings by facility
     List<Booking> findByFacilityId(Long facilityId);
 

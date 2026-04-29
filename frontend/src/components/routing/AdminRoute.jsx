@@ -1,7 +1,7 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import useAuth from '../../hooks/useAuth'
 
-const ADMIN_DEMO_MODE = true
+const ADMIN_DEMO_MODE = false
 
 function decodeJwtPayload(token) {
   try {
@@ -87,7 +87,7 @@ export default function AdminRoute() {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace state={{ from: location.pathname }} />
+    return <Navigate to="/admin-login" replace state={{ from: location.pathname }} />
   }
 
   if (!hasAdminRole(accessToken)) {
