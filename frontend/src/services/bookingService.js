@@ -155,12 +155,42 @@ export const getAdminIdFromToken = () => {
 };
 
 /**
+ * Best-effort user identifier from stored access token.
+ * Falls back to the JWT subject, which is the backend user id.
+ * @returns {String}
+ */
+export const getUserIdFromToken = () => {
+  try {
+    const token =
+      localStorage.getItem('ush_access_token') ||
+      localStorage.getItem('token') ||
+      '';
+
+    if (!token) return 'SYSTEM';
+
+    const payloadPart = token.split('.')[1];
+    if (!payloadPart) return 'SYSTEM';
+
+    const normalized = payloadPart.replace(/-/g, '+').replace(/_/g, '/');
+    const decoded = atob(normalized);
+    const payload = JSON.parse(decoded);
+
+    return String(payload.userId ?? payload.id ?? payload.uid ?? payload.sub ?? 'SYSTEM');
+  } catch {
+    return 'SYSTEM';
+  }
+};
+
+/**
  * Fetch user's own bookings
+ * @param {String|Number} userId - User identifier
  * @returns {Promise} Array of user bookings
  */
-export const fetchUserBookings = async () => {
+export const fetchUserBookings = async (userId) => {
   try {
-    const response = await httpClient.get('/api/bookings/user');
+    const response = await httpClient.get('/api/bookings', {
+      params: { userId },
+    });
     return { data: response.data };
   } catch (error) {
     console.error('Error fetching user bookings:', error);

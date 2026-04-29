@@ -8,10 +8,86 @@ import {
   approveBooking,
   fetchAdminBookingReview,
   fetchAllResources,
-  getAdminIdFromToken,
   rejectBooking,
 } from '../../../services/bookingService';
+import { bookingCache } from '../../../utils/bookingCache';
 import './AdminBookingReview.css';
+
+const DEMO_BOOKINGS_CACHE_KEY = 'ush_demo_bookings_cache';
+
+const readBookingsCache = () => {
+  try {
+    const raw = sessionStorage.getItem(DEMO_BOOKINGS_CACHE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
+
+const writeBookingsCache = (bookings) => {
+  try {
+    sessionStorage.setItem(DEMO_BOOKINGS_CACHE_KEY, JSON.stringify(bookings));
+  } catch {
+    // Ignore storage write failures in demo mode.
+  }
+};
+
+const normalizeBooking = (booking) => {
+  const facilityId = booking?.facilityId ?? booking?.resourceId ?? null;
+  return {
+    ...booking,
+    facilityId,
+    resourceId: facilityId,
+  };
+};
+
+const timeToMinutes = (timeStr) => {
+  if (!timeStr) return 0;
+  const [hours, minutes] = String(timeStr).split(':').map(Number);
+  return (hours * 60) + minutes;
+};
+
+const overlaps = (left, right) => {
+  const leftStart = timeToMinutes(left.startTime);
+  const leftEnd = timeToMinutes(left.endTime);
+  const rightStart = timeToMinutes(right.startTime);
+  const rightEnd = timeToMinutes(right.endTime);
+  return leftStart < rightEnd && leftEnd > rightStart;
+};
+
+const buildLocalReviewData = (booking, allBookings) => {
+  const normalizedBooking = normalizeBooking(booking);
+  const conflictingBookings = allBookings
+    .map(normalizeBooking)
+    .filter((item) =>
+      String(item.bookingCode) !== String(normalizedBooking.bookingCode) &&
+      String(item.facilityId) === String(normalizedBooking.facilityId) &&
+      String(item.bookingDate) === String(normalizedBooking.bookingDate) &&
+      item.status === 'APPROVED' &&
+      overlaps(normalizedBooking, item),
+    );
+
+  const canApprove = normalizedBooking.status === 'PENDING' && conflictingBookings.length === 0;
+
+  return {
+    bookingDetails: normalizedBooking,
+    resourceSummary: 'Local demo review mode.',
+    approvedBookingsForDate: allBookings
+      .map(normalizeBooking)
+      .filter((item) =>
+        String(item.facilityId) === String(normalizedBooking.facilityId) &&
+        String(item.bookingDate) === String(normalizedBooking.bookingDate) &&
+        item.status === 'APPROVED',
+      ),
+    overlappingBookings: conflictingBookings,
+    canApprove,
+    reviewMessage: canApprove
+      ? 'Booking is valid and can be approved locally.'
+      : 'Booking has overlap conflicts and cannot be approved locally.',
+  };
+};
 
 export default function AdminBookingReview() {
   const { id } = useParams();
@@ -36,25 +112,57 @@ export default function AdminBookingReview() {
       setLoading(true);
       setError('');
 
+      const cachedBookings = readBookingsCache().map(normalizeBooking);
+      const cachedResources = bookingCache.getResources() || [];
+
+      const nextMap = {};
+      cachedResources.forEach((r) => {
+        const key = r?.id ?? r?.facilityId ?? r?.resourceId;
+        if (key != null) nextMap[String(key)] = r?.name || 'Unnamed Facility';
+      });
+
+      const token = localStorage.getItem('ush_access_token') || localStorage.getItem('token') || '';
+      if (!token) {
+        const localBooking = cachedBookings.find((booking) => String(booking.bookingCode) === String(id));
+        if (!localBooking) {
+          setError('Booking not found in demo data.');
+          setLoading(false);
+          return;
+        }
+
+        setResourceMap(nextMap);
+        setReviewData(buildLocalReviewData(localBooking, cachedBookings));
+        setLoading(false);
+        return;
+      }
+
       const [reviewRes, resourcesRes] = await Promise.all([
         fetchAdminBookingReview(id),
         fetchAllResources(),
       ]);
 
       if (reviewRes.error || !reviewRes.data) {
-        setError(reviewRes.error || 'Booking not found.');
+        const localBooking = cachedBookings.find((booking) => String(booking.bookingCode) === String(id));
+        if (!localBooking) {
+          setError(reviewRes.error || 'Booking not found.');
+          setLoading(false);
+          return;
+        }
+
+        setResourceMap(nextMap);
+        setReviewData(buildLocalReviewData(localBooking, cachedBookings));
         setLoading(false);
         return;
       }
 
       const resources = Array.isArray(resourcesRes.data) ? resourcesRes.data : [];
-      const nextMap = {};
+      const remoteMap = {};
       resources.forEach((r) => {
         const key = r?.id ?? r?.facilityId ?? r?.resourceId;
-        if (key != null) nextMap[String(key)] = r?.name || 'Unnamed Facility';
+        if (key != null) remoteMap[String(key)] = r?.name || 'Unnamed Facility';
       });
 
-      setResourceMap(nextMap);
+      setResourceMap(Object.keys(remoteMap).length > 0 ? remoteMap : nextMap);
       setReviewData(reviewRes.data);
       setLoading(false);
     };
@@ -88,18 +196,67 @@ export default function AdminBookingReview() {
 
     setSubmitting(true);
     setActionError('');
-    const adminId = getAdminIdFromToken();
+    const token = localStorage.getItem('ush_access_token') || localStorage.getItem('token') || '';
+    const isDemoMode = !token;
+
+    const applyLocalChange = (nextStatus) => {
+      const allBookings = readBookingsCache().map(normalizeBooking);
+      const nextBookings = allBookings.map((booking) => {
+        if (String(booking.bookingCode) !== String(identifier)) {
+          return booking;
+        }
+
+        const updated = {
+          ...booking,
+          status: nextStatus,
+          adminDecisionReason: remarksToUse || '',
+          updatedAt: new Date().toISOString(),
+        };
+
+        if (nextStatus === 'APPROVED') {
+          updated.approvedAt = new Date().toISOString();
+          updated.approvedBy = 'SYSTEM';
+          updated.rejectedAt = null;
+          updated.rejectedBy = null;
+          updated.qrToken = updated.qrToken || `DEMO-${String(identifier)}`;
+        }
+
+        if (nextStatus === 'REJECTED') {
+          updated.rejectedAt = new Date().toISOString();
+          updated.rejectedBy = 'SYSTEM';
+          updated.approvedAt = null;
+          updated.approvedBy = null;
+          updated.qrToken = null;
+        }
+
+        return updated;
+      });
+
+      writeBookingsCache(nextBookings);
+      const refreshed = nextBookings.find((booking) => String(booking.bookingCode) === String(identifier));
+      setReviewData(buildLocalReviewData(refreshed, nextBookings));
+    };
 
     try {
-      const result =
-        actionType === 'APPROVE'
-          ? await approveBooking(identifier, adminId, remarksToUse)
-          : await rejectBooking(identifier, adminId, remarksToUse);
+      if (isDemoMode) {
+        applyLocalChange(actionType === 'APPROVE' ? 'APPROVED' : 'REJECTED');
+      } else {
+        const adminId = 'SYSTEM';
+        const result =
+          actionType === 'APPROVE'
+            ? await approveBooking(identifier, adminId, remarksToUse)
+            : await rejectBooking(identifier, adminId, remarksToUse);
 
-      if (result.error) {
-        setActionError(result.error);
-        setSubmitting(false);
-        return false;
+        if (result.error) {
+          setActionError(result.error);
+          setSubmitting(false);
+          return false;
+        }
+
+        const refresh = await fetchAdminBookingReview(identifier);
+        if (!refresh.error && refresh.data) {
+          setReviewData(refresh.data);
+        }
       }
 
       if (actionType === 'APPROVE') {
@@ -110,11 +267,6 @@ export default function AdminBookingReview() {
         if (!isEditingRemarks) {
           setTimeout(() => navigate(`/admin/booking?highlight=${identifier}`), 1200);
         }
-      }
-
-      const refresh = await fetchAdminBookingReview(identifier);
-      if (!refresh.error && refresh.data) {
-        setReviewData(refresh.data);
       }
 
       setSubmitting(false);

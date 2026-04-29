@@ -6,6 +6,6 @@ export async function login(credentials) {
 }
 
 export async function getProfile() {
-  const response = await httpClient.get('/api/users/me')
+  const response = await httpClient.get('/api/user/me')
   return response.data
 }

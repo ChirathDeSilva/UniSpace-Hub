@@ -1,8 +1,9 @@
 .bd-page {
   min-height: 100vh;
-  background: #0b1220;
-  padding: 24px;
-  color: #e5e7eb;
+  background: #ffffff;
+  padding: 28px 20px;
+  color: #0f1724;
+  font-family: 'Poppins', sans-serif;
 }
 
 .bd-container {
@@ -15,28 +16,29 @@
   justify-content: space-between;
   gap: 12px;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 18px;
 }
 
 .bd-topbar-meta {
-  color: #93c5fd;
+  color: #6B7280;
   font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.16em;
+  font-weight: 700;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
 .bd-layout {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr);
-  gap: 16px;
+  gap: 18px;
 }
 
 .bd-card {
-  background: #111a2e;
-  border: 1px solid #25304a;
-  border-radius: 10px;
+  background: #ffffff;
+  border: 1px solid #eef6ff;
+  border-radius: 14px;
   padding: 18px;
+  box-shadow: 0 8px 24px rgba(16,24,64,0.04);
 }
 
 .bd-hero {
@@ -53,10 +55,10 @@
 .bd-kicker,
 .bd-section-title {
   margin: 0 0 10px;
-  color: #93c5fd;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.18em;
+  color: #6B7280;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   display: inline-flex;
   gap: 8px;
@@ -65,12 +67,14 @@
 
 .bd-hero h1 {
   margin: 0 0 8px;
-  font-size: 30px;
+  font-size: 28px;
+  color: #1E2A78;
+  font-weight: 800;
 }
 
 .bd-muted {
   margin: 0;
-  color: #9ca3af;
+  color: #6B7280;
   display: inline-flex;
   gap: 8px;
   align-items: center;
@@ -84,26 +88,27 @@
 }
 
 .bd-info-box {
-  background: #0d1425;
-  border: 1px solid #25304a;
-  border-radius: 8px;
+  background: #fbfdff;
+  border: 1px solid #eef6ff;
+  border-radius: 10px;
   padding: 14px;
 }
 
 .bd-info-box span {
   display: block;
   margin-bottom: 6px;
-  color: #9ca3af;
+  color: #6B7280;
   font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.14em;
+  font-weight: 700;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
 .bd-info-box strong {
   display: block;
-  color: #f8fafc;
+  color: #0f1724;
   font-size: 18px;
+  font-weight: 800;
 }
 
 .bd-info-box p,
@@ -120,9 +125,9 @@
 .bd-summary,
 .bd-qr-card {
   margin-top: 16px;
-  background: #0d1425;
-  border: 1px solid #25304a;
-  border-radius: 8px;
+  background: #ffffff;
+  border: 1px solid #eef6ff;
+  border-radius: 10px;
   padding: 14px;
 }
 
@@ -155,11 +160,11 @@
 
 .bd-field input,
 .bd-field textarea {
-  background: #0d1425;
-  border: 1px solid #3b4a6b;
-  color: #eef2ff;
-  border-radius: 6px;
-  padding: 10px 12px;
+  background: #ffffff;
+  border: 1px solid #eef6ff;
+  color: #0f1724;
+  border-radius: 8px;
+  padding: 12px 14px;
   font: inherit;
 }
 
@@ -171,29 +176,31 @@
 }
 
 .bd-btn,
+.bd-btn,
 .bd-link-btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  border: 1px solid #42547a;
-  background: #1b2a47;
-  color: #fff;
-  border-radius: 6px;
-  padding: 9px 12px;
+  gap: 8px;
+  border: 1px solid rgba(30,42,120,0.06);
+  background: #ffffff;
+  color: #1E2A78;
+  border-radius: 10px;
+  padding: 10px 14px;
   text-decoration: none;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
 }
-
 .bd-btn-primary {
-  background: #2144a1;
-  border-color: #3766dc;
+  background: #1E2A78;
+  color: #ffffff;
+  border-color: #1E2A78;
 }
-
 .bd-btn-danger {
-  background: #7e2f2f;
-  border-color: #a84a4a;
+  background: rgba(190,18,60,0.06);
+  color: #BE123C;
+  border-color: rgba(190,18,60,0.08);
+}
 }
 
 .bd-btn:disabled {
