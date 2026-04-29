@@ -64,6 +64,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/notifications/**").permitAll()
                 // All other endpoints require a valid JWT (enforced elsewhere)
                 .requestMatchers("/api/bookings/**").permitAll()
+                // Admin booking endpoints are publicly accessible (role checks handled in service layer)
+                .requestMatchers("/api/admin/bookings/**").permitAll()
                 .anyRequest().authenticated()
             )
 

@@ -68,6 +68,7 @@ export function useBookingDetail(bookingCode) {
     setError('');
 
     try {
+      // Fetch bookings and resources without authentication
       const [bookingsResult, resourcesResult] = await Promise.all([
         fetchAdminBookings(),
         fetchAllResources(),

@@ -1,13 +1,5 @@
-/**
- * useAdminBookings.js — Admin Booking List Hook
- *
- * Encapsulates: data fetching, resources map, status filter logic, loading & error state.
- * The AdminBookingDashboard page becomes a pure presentation component
- * by consuming this hook.
- */
-
 import { useState, useEffect, useCallback } from 'react';
-import { fetchAllResources, fetchUserBookings, getUserIdFromToken } from '../services/bookingService';
+import { fetchAdminBookings, fetchAllResources } from '../services/bookingService';
 import { bookingCache } from '../utils/bookingCache';
 
 export const BOOKING_STATUSES = ['ALL', 'PENDING', 'APPROVED', 'REJECTED', 'CANCELLED'];
@@ -89,19 +81,8 @@ export function useAdminBookings() {
         setLoading(true);
         setError(null);
 
-        const userId = getUserIdFromToken();
-        let bookingsResult = { data: [] };
-        if (userId && userId !== 'SYSTEM') {
-            bookingsResult = await fetchUserBookings(userId);
-        } else {
-            const cachedBookings = readBookingsCache();
-            if (cachedBookings.length > 0) {
-                bookingsResult = { data: cachedBookings.map(normalizeBooking) };
-            } else {
-                bookingsResult = { data: [] };
-            }
-        }
-
+        // Fetch bookings without requiring authentication
+        const bookingsResult = await fetchAdminBookings();
         const resourcesResult = await fetchAllResources();
 
         if (bookingsResult.error) {
@@ -114,10 +95,10 @@ export function useAdminBookings() {
                 setError(bookingsResult.error);
             }
         } else {
-                const apiList = (Array.isArray(bookingsResult.data) ? bookingsResult.data : []).map(normalizeBooking);
-                const cachedBookings = readBookingsCache();
-                const merged = mergeBookings(apiList, cachedBookings);
-                setBookings(merged);
+            const apiList = (Array.isArray(bookingsResult.data) ? bookingsResult.data : []).map(normalizeBooking);
+            const cachedBookings = readBookingsCache();
+            const merged = mergeBookings(apiList, cachedBookings);
+            setBookings(merged);
         }
 
         // Build facilityId/resourceId -> name map regardless of booking errors
@@ -131,9 +112,10 @@ export function useAdminBookings() {
         });
         setResourcesMap(map);
 
-        if (!userId || userId === 'SYSTEM') {
+        // Fallback to cached resources if needed
+        if (Object.keys(map).length === 0) {
             const cachedResources = bookingCache.getResources() || [];
-            if (cachedResources.length > 0 && Object.keys(map).length === 0) {
+            if (cachedResources.length > 0) {
                 const fallbackMap = {};
                 cachedResources.forEach((resource) => {
                     const id = resource?.id ?? resource?.facilityId ?? resource?.resourceId;

@@ -91,7 +91,7 @@ export const fetchAdminBookingReview = async (bookingCode) => {
 /**
  * Approve booking as admin
  * @param {String} bookingCode - Booking code
- * @param {String|Number} adminId - Acting admin identifier
+ * @param {String|Number} adminId - Acting admin identifier (optional, backend defaults to 'SYSTEM')
  * @param {String} reason - Optional decision remarks
  * @returns {Promise} Updated booking
  */
@@ -104,6 +104,7 @@ export const approveBooking = async (bookingCode, adminId, reason = '') => {
     const response = await httpClient.patch(`/api/admin/bookings/${bookingCode}/approve`, payload);
     return { data: response.data };
   } catch (error) {
+    console.error('Error approving booking:', error);
     return { data: null, error: getErrorMessage(error, 'Failed to approve booking') };
   }
 };
@@ -111,7 +112,7 @@ export const approveBooking = async (bookingCode, adminId, reason = '') => {
 /**
  * Reject booking as admin
  * @param {String} bookingCode - Booking code
- * @param {String|Number} adminId - Acting admin identifier
+ * @param {String|Number} adminId - Acting admin identifier (optional, backend defaults to 'SYSTEM')
  * @param {String} reason - Rejection reason (required by backend)
  * @returns {Promise} Updated booking
  */
@@ -124,6 +125,7 @@ export const rejectBooking = async (bookingCode, adminId, reason) => {
     const response = await httpClient.patch(`/api/admin/bookings/${bookingCode}/reject`, payload);
     return { data: response.data };
   } catch (error) {
+    console.error('Error rejecting booking:', error);
     return { data: null, error: getErrorMessage(error, 'Failed to reject booking') };
   }
 };
